@@ -282,7 +282,7 @@ section h2 {
   margin-bottom: 10px;
 }
 
-/* GRID E CARD HOME (OTTIMIZZATE PER TESTI LUNGHI) */
+/* GRID E CARD HOME */
 .audio-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -1192,16 +1192,54 @@ footer {
   box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
 }
 
-@media (max-width: 600px) {
+/* --- CORREZIONI DEFINITIVE PER IL FORM SU MOBILE (Visto in foto) --- */
+@media (max-width: 768px) {
+  .sezione-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .gruppo-input {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    margin-bottom: 0 !important;
+  }
+
+  .gruppo-input label {
+    margin-bottom: 6px;
+    text-align: left;
+  }
+
+  .gruppo-input input,
+  .gruppo-input select,
+  .gruppo-input textarea {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .header-recensioni {
-    padding: 100px 0 20px;
+    padding: 100px 15px 20px !important;
   }
+  
+  .container-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
   .btn-back {
-    position: static;
-    display: inline-block;
-    margin-bottom: 15px;
+    position: static !important;
+    display: inline-block !important;
+    transform: none !important;
+    margin-bottom: 5px;
   }
-  .sezione-form {
-    padding: 20px;
+
+  .header-recensioni h1 {
+    font-size: 1.6rem !important;
+    text-align: left;
   }
 }

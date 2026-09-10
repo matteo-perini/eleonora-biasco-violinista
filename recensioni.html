@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recensioni - Dicono di noi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header con pulsante per tornare indietro -->
+    <header class="header-recensioni">
+        <div class="container-header">
+            <a href="index.html" class="btn-back">← Torna alla Home</a>
+            <h1>Cosa dicono i nostri clienti</h1>
+        </div>
+    </header>
+
+    <main class="container-recensioni">
+        
+        <!-- BLOCCO 1: Il Modulo per lasciare la recensione -->
+        <section class="sezione-form">
+            <h2>Lascia una recensione</h2>
+            <p>La tua opinione è importante per noi.</p>
+            
+            <form id="form-recensioni">
+                <div class="gruppo-input">
+                    <label for="nome">Il tuo nome</label>
+                    <input type="text" id="nome" name="nome" required placeholder="Es. Mario Rossi">
+                </div>
+
+                <div class="gruppo-input">
+                    <label for="voto">Valutazione</label>
+                    <select id="voto" name="voto" required>
+                        <option value="5">⭐⭐⭐⭐⭐ (5/5) - Eccellente</option>
+                        <option value="4">⭐⭐⭐⭐ (4/5) - Molto buono</option>
+                        <option value="3">⭐⭐⭐ (3/5) - Buono</option>
+                        <option value="2">⭐⭐ (2/5) - Sufficiente</option>
+                        <option value="1">⭐ (1/5) - Da migliorare</option>
+                    </select>
+                </div>
+
+                <div class="gruppo-input">
+                    <label for="messaggio">La tua esperienza</label>
+                    <textarea id="messaggio" name="messaggio" rows="4" required placeholder="Racconta brevemente come ti sei trovato..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-invia">Invia recensione</button>
+            </form>
+        </section>
+
+        <!-- BLOCCO 2: La bacheca delle recensioni -->
+        <section class="sezione-bacheca">
+            <h2>Ultime recensioni</h2>
+            
+            <div id="contenitore-recensioni" class="griglia-recensioni">
+                <p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Caricamento recensioni in corso...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- POPUP MODALE ELEGANTE -->
+    <div id="customPopup" class="custom-popup">
+        <div class="popup-content">
+            <span class="popup-icon">✨</span>
+            <p id="popupMessage">Recensione pubblicata con successo!</p>
+            <button onclick="chiudiPopup()" class="btn-popup">Ottimo</button>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqTPhG3_Zh9LP5reIK44uJzNso_5S_YFrKEc6AIKn4XDzNOL24M_gRD0AsLbmp_vrX/exec";
+
+        // Gestione Popup Custom
+        function mostraPopup(messaggio) {
+            document.getElementById("popupMessage").innerText = messaggio;
+            document.getElementById("customPopup").classList.add("active");
+        }
+
+        function chiudiPopup() {
+            document.getElementById("customPopup").classList.remove("active");
+        }
+
+        function creaCardHTML(nome, voto, messaggio, data) {
+            const numStelle = parseInt(voto) || 5;
+            const stelleStr = "⭐".repeat(numStelle);
+            return `
+                <div class="header-card">
+                    <span class="nome-utente">${nome}</span>
+                    <span class="stelle">${stelleStr}</span>
+                </div>
+                <p class="testo-recensione">"${messaggio}"</p>
+                <span class="data-recensione">${data}</span>
+            `;
+        }
+
+        // 1. Scarica e mostra tutte le recensioni dal Foglio Google
+        async function caricaRecensioni() {
+            const contenitore = document.getElementById("contenitore-recensioni");
+            
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+
+                if (!data || data.length === 0) {
+                    contenitore.innerHTML = `<p id="messaggio-vuoto" style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Ancora nessuna recensione. Sii il primo a lasciarne una!</p>`;
+                    return;
+                }
+
+                contenitore.innerHTML = "";
+                
+                data.reverse().forEach(recensione => {
+                    const card = document.createElement("div");
+                    card.className = "card-recensione";
+                    card.innerHTML = creaCardHTML(recensione.nome, recensione.voto, recensione.messaggio, recensione.data);
+                    contenitore.appendChild(card);
+                });
+            } catch (err) {
+                console.error("Errore nel caricamento recensioni:", err);
+                contenitore.innerHTML = `<p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Impossibile caricare le recensioni al momento.</p>`;
+            }
+        }
+
+        // 2. Invia la recensione con aggiornamento istantaneo dell'interfaccia
+        document.getElementById("form-recensioni").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            const nomeVal = document.getElementById("nome").value;
+            const votoVal = document.getElementById("voto").value;
+            const messaggioVal = document.getElementById("messaggio").value;
+            const dataOggi = new Date().toLocaleDateString("it-IT");
+
+            const contenitore = document.getElementById("contenitore-recensioni");
+            const messaggioVuoto = document.getElementById("messaggio-vuoto");
+            if (messaggioVuoto) messaggioVuoto.remove();
+
+            const nuovaCard = document.createElement("div");
+            nuovaCard.className = "card-recensione";
+            nuovaCard.innerHTML = creaCardHTML(nomeVal, votoVal, messaggioVal, dataOggi);
+            contenitore.insertBefore(nuovaCard, contenitore.firstChild);
+
+            this.reset();
+            mostraPopup("La tua recensione è stata pubblicata!");
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ nome: nomeVal, voto: votoVal, messaggio: messaggioVal })
+            }).catch(err => console.error("Errore salvataggio:", err));
+        });
+
+        document.getElementById("customPopup").addEventListener("click", function(e) {
+            if (e.target === this) {
+                chiudiPopup();
+            }
+        });
+
+        caricaRecensioni();
+    </script>
+
+</body>
+</html>

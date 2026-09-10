@@ -28,6 +28,7 @@
       <a href="#media">Media</a>
       <a href="#repertorio">Repertorio</a>
       <a href="#didattica">Didattica</a>
+      <a href="recensioni.html">Recensioni</a>
       <a href="#contatti">Contatti</a>
     </nav>
   </header>
@@ -257,6 +258,25 @@
     </div>
   </section>
 
+  <!-- Sezione Anteprima Recensioni Dinamiche -->
+  <section id="recensioni" class="recensioni-section">
+    <div class="container">
+      <h2 class="reveal-item">Dicono di Me</h2>
+      <p class="subtitle reveal-item">Alcuni pensieri di chi ha ascoltato la mia musica</p>
+      
+      <!-- Contenitore collegato a Google Sheets -->
+      <div class="audio-grid reveal-item" id="anteprima-recensioni-grid">
+        <p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Caricamento recensioni...</p>
+      </div>
+
+      <div class="reveal-item" style="text-align: center; margin-top: 35px;">
+        <a href="recensioni.html" class="btn-hero">
+          <span>Lascia o leggi tutte le recensioni</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- Badge WhatsApp Fluttuante -->
   <div class="floating-buttons" id="floatingButtons">
     <a href="https://wa.me/393440124111?text=Ciao,%20vorrei%20ricevere%20maggiori%20informazioni." target="_blank" class="float-btn whatsapp-float" title="Scrivi su WhatsApp">
@@ -271,7 +291,7 @@
     </a>
     <div class="footer-content">
       
-      <!-- Colonna Sinistra: Social e Contatti (Tutti bianchi in grassetto) -->
+      <!-- Colonna Sinistra: Social e Contatti -->
       <div class="footer-col footer-col-left">
         <a href="https://www.instagram.com/_eleonorabiasco_violinist_?stkn=MXVkNWNlazJsZmQwcQ==" target="_blank" class="footer-social-link">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E1306C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
@@ -288,14 +308,14 @@
         <p class="footer-pec"><strong>PEC:</strong> <a href="mailto:biascoeleonora@pec.it">biascoeleonora@pec.it</a></p>
       </div>
 
-      <!-- Colonna Centrale: Località, Telefono, Email (Bianchi e in grassetto, centrati) -->
+      <!-- Colonna Centrale: Località, Telefono, Email -->
       <div class="footer-col footer-col-mid">
         <p class="footer-highlight"><strong>Località:</strong> Jesolo (VE)</p>
         <p class="footer-highlight"><strong>Telefono:</strong> <a href="tel:+393440124111">+39 344 0124111</a></p>
         <p class="footer-highlight"><strong>Email:</strong> <a href="mailto:biascoeleonora95@gmail.com">biascoeleonora95@gmail.com</a></p>
       </div>
 
-      <!-- Colonna Destra: Titolo e Link Privacy / Note Legali (Colori originali oro/giallo in grassetto) -->
+      <!-- Colonna Destra: Note Legali -->
       <div class="footer-col footer-col-right">
         <div class="footer-right-desktop">
           <p class="footer-right-title">Privacy e Note Legali</p>
@@ -314,7 +334,9 @@
     </div>
   </footer>
 
+  <!-- SCRIPT JAVASCRIPT COMPLETI -->
   <script>
+    // 1. Animazioni allo scroll
     const observerOptions = {
       root: null,
       rootMargin: '0px',
@@ -333,6 +355,7 @@
       revealObserver.observe(element);
     });
 
+    // 2. Nasconde il pulsante WhatsApp sopra il footer
     window.addEventListener('scroll', () => {
       const footer = document.querySelector('footer');
       const floatingButtons = document.getElementById('floatingButtons');
@@ -348,18 +371,21 @@
       }
     });
 
+    // 3. Galleria fotografica infinita
     const track = document.getElementById('sliderTrack');
-    let slidesHTML = '';
-    for (let i = 1; i <= 20; i++) {
-      let extraClass = (i === 11 || i === 19) ? 'class="fix-contain"' : '';
-      slidesHTML += `
-        <div class="slide">
-          <img src="img/foto${i}.jpeg" alt="Eleonora Biasco Foto ${i}" ${extraClass} onerror="this.onerror=null; this.src='img/foto${i}.jpg';">
-        </div>
-      `;
+    if (track) {
+      let slidesHTML = '';
+      for (let i = 1; i <= 20; i++) {
+        let extraClass = (i === 11 || i === 19) ? 'class="fix-contain"' : '';
+        slidesHTML += `
+          <div class="slide">
+            <img src="img/foto${i}.jpeg" alt="Eleonora Biasco Foto ${i}" ${extraClass} onerror="this.onerror=null; this.src='img/foto${i}.jpg';">
+          </div>
+        `;
+      }
+      track.innerHTML = slidesHTML + slidesHTML + slidesHTML;
+      track.style.width = `calc(280px * 60)`;
     }
-    track.innerHTML = slidesHTML + slidesHTML + slidesHTML;
-    track.style.width = `calc(280px * 60)`;
 
     const styleSheet = document.styleSheets[0];
     const keyframes = `
@@ -370,6 +396,7 @@
     `;
     try { styleSheet.insertRule(keyframes, styleSheet.cssRules.length); } catch (e) {}
 
+    // 4. Modal Video Player
     const videoModal = document.getElementById('videoModal');
     const modalVideo = document.getElementById('modalVideo');
     const closeModal = document.getElementById('closeModal');
@@ -403,25 +430,70 @@
     });
 
     function closeVideoModal() {
-      modalVideo.pause();
-      modalVideo.src = '';
-      videoModal.classList.remove('active');
+      if (modalVideo) {
+        modalVideo.pause();
+        modalVideo.src = '';
+      }
+      if (videoModal) {
+        videoModal.classList.remove('active');
+      }
       document.body.style.overflow = 'auto';
     }
 
-    closeModal.addEventListener('click', closeVideoModal);
+    if (closeModal) closeModal.addEventListener('click', closeVideoModal);
     
-    videoModal.addEventListener('click', (e) => {
-      if (e.target === videoModal) {
-        closeVideoModal();
-      }
-    });
+    if (videoModal) {
+      videoModal.addEventListener('click', (e) => {
+        if (e.target === videoModal) {
+          closeVideoModal();
+        }
+      });
+    }
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeVideoModal();
       }
     });
+
+    // 5. Caricamento dinamico delle ultime 3 recensioni dal Foglio Google
+    async function caricaAnteprimaHome() {
+      const grid = document.getElementById("anteprima-recensioni-grid");
+      if (!grid) return;
+
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqTPhG3_Zh9LP5reIK44uJzNso_5S_YFrKEc6AIKn4XDzNOL24M_gRD0AsLbmp_vrX/exec";
+
+      try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          grid.innerHTML = "";
+          const ultimeTre = data.reverse().slice(0, 3);
+
+          ultimeTre.forEach(rec => {
+            const numStelle = parseInt(rec.voto) || 5;
+            const stelleStr = "⭐".repeat(numStelle);
+
+            const card = document.createElement("div");
+            card.className = "audio-card";
+            card.innerHTML = `
+              <h3>${rec.nome}</h3>
+              <p style="color: var(--primary-color); margin: 5px 0;">${stelleStr}</p>
+              <p class="audio-desc" style="font-style: italic;">"${rec.messaggio}"</p>
+            `;
+            grid.appendChild(card);
+          });
+        } else {
+          grid.innerHTML = `<p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Ancora nessuna recensione. Sii il primo a lasciarne una!</p>`;
+        }
+      } catch (err) {
+        console.error("Errore nel caricamento dell'anteprima:", err);
+        grid.innerHTML = `<p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Impossibile caricare le recensioni al momento.</p>`;
+      }
+    }
+
+    caricaAnteprimaHome();
   </script>
 
 </body>

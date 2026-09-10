@@ -81,16 +81,32 @@
             document.getElementById("customPopup").classList.remove("active");
         }
 
+        // Funzione per ripulire la data (estrae solo giorno/mese/anno ed elimina l'orario e il formato ISO)
+        function formattaData(dataString) {
+            if (!dataString) return "";
+            try {
+                const d = new Date(dataString);
+                if (!isNaN(d.getTime())) {
+                    return d.toLocaleDateString("it-IT");
+                }
+            } catch (e) {}
+            if (dataString.includes("T")) {
+                return dataString.split("T")[0].split("-").reverse().join("/");
+            }
+            return dataString;
+        }
+
         function creaCardHTML(nome, voto, messaggio, data) {
             const numStelle = parseInt(voto) || 5;
             const stelleStr = "⭐".repeat(numStelle);
+            const dataPulita = formattaData(data);
             return `
                 <div class="header-card">
                     <span class="nome-utente">${nome}</span>
                     <span class="stelle">${stelleStr}</span>
                 </div>
                 <p class="testo-recensione">"${messaggio}"</p>
-                <span class="data-recensione">${data}</span>
+                <span class="data-recensione">${dataPulita}</span>
             `;
         }
 

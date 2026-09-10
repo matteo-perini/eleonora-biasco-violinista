@@ -154,6 +154,15 @@
             Il tuo browser non supporta l'elemento audio.
           </audio>
         </div>
+
+        <div class="audio-card reveal-item">
+          <h3>🎻 You Rise Me Up</h3>
+          <p class="audio-desc">Demo • Live Violin</p>
+          <audio controls preload="none" class="custom-audio">
+            <source src="audio/demo5.m4a" type="audio/mp4">
+            Il tuo browser non supporta l'elemento audio.
+          </audio>
+        </div>
       </div>
     </div>
   </section>
@@ -456,7 +465,7 @@
       }
     });
 
-    // 5. Caricamento dinamico delle ultime 3 recensioni dal Foglio Google
+    // 5. Caricamento dinamico delle ultime 3 recensioni dal Foglio Google con testo troncato
     async function caricaAnteprimaHome() {
       const grid = document.getElementById("anteprima-recensioni-grid");
       if (!grid) return;
@@ -475,12 +484,18 @@
             const numStelle = parseInt(rec.voto) || 5;
             const stelleStr = "⭐".repeat(numStelle);
 
+            // Tronca il testo se supera 140 caratteri e aggiunge i puntini
+            let messaggioTesto = rec.messaggio || "";
+            if (messaggioTesto.length > 140) {
+              messaggioTesto = messaggioTesto.substring(0, 140) + "...";
+            }
+
             const card = document.createElement("div");
             card.className = "audio-card";
             card.innerHTML = `
               <h3>${rec.nome}</h3>
               <p style="color: var(--primary-color); margin: 5px 0;">${stelleStr}</p>
-              <p class="audio-desc" style="font-style: italic;">"${rec.messaggio}"</p>
+              <p class="audio-desc" style="font-style: italic;">"${messaggioTesto}"</p>
             `;
             grid.appendChild(card);
           });

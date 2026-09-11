@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repertorio Completo | Eleonora Biasco</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* RESET ANGOLI SQUADRATI PER TUTTI GLI ELEMENTI */
+    *, *::before, *::after {
+      border-radius: 0 !important;
+    }
+
+    /* CONTENITORE COMPATTO E RIDOTTO */
+    .repertorio-compact-container {
+      max-width: 580px;
+      margin: 0 auto;
+      padding: 0 10px 40px;
+    }
+
+    /* BARRA DI RICERCA MOLTO COMPATTA */
+    .search-container {
+      max-width: 350px;
+      margin: 0 auto 15px auto;
+      text-align: center;
+    }
+
+    .search-repertorio {
+      width: 100%;
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: var(--text-color, #f5f5f5);
+      font-size: 0.78rem;
+      font-family: var(--font-body, 'Montserrat', sans-serif);
+      outline: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .search-repertorio:focus {
+      border-color: var(--primary-color, #d4af37);
+      box-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+    }
+
+    /* BOX CATEGORIA PIÙ ATTACCATO E PICCOLO */
+    .category-section {
+      background: var(--bg-card, rgba(26, 26, 26, 0.8));
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+
+    .category-title {
+      color: var(--primary-color, #d4af37);
+      font-family: var(--font-heading, 'Cinzel', serif);
+      font-size: 0.95rem;
+      margin: 0 0 8px 0;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+    }
+
+    .track-list-minimal {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    /* MICRO PLAYER CARD SUPER SOTTILE */
+    .micro-player-card {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(212, 175, 55, 0.15);
+      padding: 5px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .micro-player-card:hover {
+      border-color: var(--primary-color, #d4af37);
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    .micro-track-title {
+      color: #ffffff;
+      font-weight: 500;
+      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* BOTTONE PLAY/PAUSE PIÙ PICCOLO */
+    .play-btn-mini {
+      background: transparent;
+      border: 1px solid var(--primary-color, #d4af37);
+      color: var(--primary-color, #d4af37);
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.65rem;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      padding-left: 1px;
+    }
+
+    .play-btn-mini:hover, .play-btn-mini.playing {
+      background: var(--primary-color, #d4af37);
+      color: #121212;
+      box-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
+      padding-left: 0;
+    }
+
+    /* LOGICA TENDINA ESPANDIBILE */
+    .track-extra {
+      display: none;
+    }
+
+    .category-section.expanded .track-extra {
+      display: flex;
+    }
+
+    .btn-expand-wrapper {
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .btn-expand-category {
+      background: transparent;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      color: var(--primary-color, #d4af37);
+      padding: 3px 10px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-expand-category:hover {
+      background: var(--primary-color, #d4af37);
+      color: #121212;
+      box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+    }
+
+    audio {
+      display: none;
+    }
+
+    .empty-category-msg {
+      color: var(--text-muted, #aaaaaa);
+      font-size: 0.72rem;
+      font-style: italic;
+      margin: 2px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-recensioni" style="padding: 15px 10px 10px;">
+    <div class="container-header">
+      <a href="index.html" class="btn-back" style="font-size: 0.75rem;">← Torna alla Home</a>
+      <h1 style="font-size: 1.3rem; margin-top: 5px;">Repertorio Completo</h1>
+      <p class="subtitle" style="margin-top: 2px; font-size: 0.75rem;">Seleziona un brano per l'ascolto immediato</p>
+    </div>
+  </div>
+
+  <div class="repertorio-compact-container">
+    
+    <div class="search-container">
+      <input type="text" id="repertorio-search" class="search-repertorio" placeholder="🔍 Cerca brano..." onkeyup="filtrarRepertorio()">
+    </div>
+
+    <div id="repertorio-content">
+      
+      <div class="category-section" id="cat-leggera">
+        <h2 class="category-title">🎵 Musica Leggera</h2>
+        <div class="track-list-minimal" id="list-leggera"></div>
+        <div class="btn-expand-wrapper" id="expand-wrapper-leggera" style="display: none;">
+          <button class="btn-expand-category" onclick="toggleExpand('cat-leggera', this)">▼ Scopri tutti</button>
+        </div>
+      </div>
+
+      <div class="category-section" id="cat-pop">
+        <h2 class="category-title">🎤 Pop</h2>
+        <div class="track-list-minimal" id="list-pop"></div>
+        <div class="btn-expand-wrapper" id="expand-wrapper-pop" style="display: none;">
+          <button class="btn-expand-category" onclick="toggleExpand('cat-pop', this)">▼ Scopri tutti</button>
+        </div>
+      </div>
+
+      <div class="category-section" id="cat-colonne-sonore">
+        <h2 class="category-title">🎬 Colonne sonore</h2>
+        <div class="track-list-minimal" id="list-colonne-sonore"></div>
+        <div class="btn-expand-wrapper" id="expand-wrapper-colonne-sonore" style="display: none;">
+          <button class="btn-expand-category" onclick="toggleExpand('cat-colonne-sonore', this)">▼ Scopri tutti</button>
+        </div>
+      </div>
+
+      <div class="category-section" id="cat-lounge">
+        <h2 class="category-title">🍸 Lounge</h2>
+        <div class="track-list-minimal" id="list-lounge"></div>
+        <div class="btn-expand-wrapper" id="expand-wrapper-lounge" style="display: none;">
+          <button class="btn-expand-category" onclick="toggleExpand('cat-lounge', this)">▼ Scopri tutti</button>
+        </div>
+      </div>
+
+      <div class="category-section" id="cat-dance">
+        <h2 class="category-title">🪩 Dance</h2>
+        <div class="track-list-minimal" id="list-dance"></div>
+        <div class="btn-expand-wrapper" id="expand-wrapper-dance" style="display: none;">
+          <button class="btn-expand-category" onclick="toggleExpand('cat-dance', this)">▼ Scopri tutti</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="no-results" style="display: none; text-align: center; color: var(--text-muted, #aaaaaa); margin-top: 15px; font-size: 0.78rem;">
+      Nessun brano trovato.
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDpFJSJppEf3YUek4vgbbG9kzyYr0xYj4s",
+      authDomain: "violinista-eleonora.firebaseapp.com",
+      projectId: "violinista-eleonora",
+      storageBucket: "violinista-eleonora.firebasestorage.app",
+      messagingSenderId: "5833623770",
+      appId: "1:5833623770:web:99467a55c0e30abd747de3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const categories = ['leggera', 'pop', 'colonne-sonore', 'lounge', 'dance'];
+
+    async function fetchFirebaseTracks() {
+      try {
+        const q = query(collection(db, "repertorio"), orderBy("titolo", "asc"));
+        const querySnapshot = await getDocs(q);
+
+        const categoryCounts = {
+          'leggera': 0,
+          'pop': 0,
+          'colonne-sonore': 0,
+          'lounge': 0,
+          'dance': 0
+        };
+
+        querySnapshot.forEach((docSnap) => {
+          const track = docSnap.data();
+          const docId = docSnap.id; // ID UNIVOCO DEL DOCUMENTO FIREBASE
+          const catRaw = track.categoria ? track.categoria.toLowerCase() : 'leggera';
+          
+          let containerId = 'list-leggera';
+          let catKey = 'leggera';
+
+          if (catRaw.includes('pop')) { containerId = 'list-pop'; catKey = 'pop'; }
+          else if (catRaw.includes('colonn')) { containerId = 'list-colonne-sonore'; catKey = 'colonne-sonore'; }
+          else if (catRaw.includes('lounge')) { containerId = 'list-lounge'; catKey = 'lounge'; }
+          else if (catRaw.includes('dance')) { containerId = 'list-dance'; catKey = 'dance'; }
+          else if (catRaw.includes('legger')) { containerId = 'list-leggera'; catKey = 'leggera'; }
+
+          const container = document.getElementById(containerId);
+          if (container) {
+            categoryCounts[catKey]++;
+            const audioId = `audio-${docId}`; // ID AUDIO UNIVOCO E SICURO
+            const isExtra = categoryCounts[catKey] > 3 ? 'track-extra' : '';
+
+            const card = document.createElement('div');
+            card.className = `micro-player-card ${isExtra}`;
+            card.innerHTML = `
+              <span class="micro-track-title">🎻 ${track.titolo}</span>
+              <button class="play-btn-mini" onclick="window.toggleAudio('${audioId}', this)">▶</button>
+              <audio id="${audioId}" src="${track.audioUrl}" preload="none"></audio>
+            `;
+            container.appendChild(card);
+          }
+        });
+
+        categories.forEach(catKey => {
+          const container = document.getElementById(`list-${catKey}`);
+          const expandWrapper = document.getElementById(`expand-wrapper-${catKey}`);
+          
+          if (categoryCounts[catKey] === 0) {
+            container.innerHTML = `<p class="empty-category-msg">Brani in arrivo...</p>`;
+          } else if (categoryCounts[catKey] > 3 && expandWrapper) {
+            expandWrapper.style.display = 'block';
+          }
+        });
+
+      } catch (error) {
+        console.error("Errore nel recupero brani da Firebase:", error);
+      }
+    }
+
+    let currentAudio = null;
+    let currentBtn = null;
+
+    window.toggleAudio = function(audioId, btn) {
+      const audio = document.getElementById(audioId);
+      if (!audio) return;
+
+      if (currentAudio === audio) {
+        if (audio.paused) {
+          audio.play();
+          btn.textContent = "❚❚";
+          btn.classList.add('playing');
+        } else {
+          audio.pause();
+          btn.textContent = "▶";
+          btn.classList.remove('playing');
+        }
+        return;
+      }
+
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        if (currentBtn) {
+          currentBtn.textContent = "▶";
+          currentBtn.classList.remove('playing');
+        }
+      }
+
+      audio.play();
+      btn.textContent = "❚❚";
+      btn.classList.add('playing');
+      currentAudio = audio;
+      currentBtn = btn;
+
+      audio.onended = () => {
+        btn.textContent = "▶";
+        btn.classList.remove('playing');
+        currentAudio = null;
+        currentBtn = null;
+      };
+    };
+
+    window.toggleExpand = function(catId, btn) {
+      const section = document.getElementById(catId);
+      section.classList.toggle('expanded');
+
+      if (section.classList.contains('expanded')) {
+        btn.textContent = "▲ Riduci";
+      } else {
+        btn.textContent = "▼ Scopri tutti";
+      }
+    };
+
+    window.filtrarRepertorio = function() {
+      const queryStr = document.getElementById('repertorio-search').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.micro-player-card');
+      const sections = document.querySelectorAll('.category-section');
+      let foundAny = false;
+
+      if (queryStr === "") {
+        cards.forEach(card => card.style.display = "flex");
+        sections.forEach(sec => {
+          sec.style.display = "block";
+          sec.classList.remove('expanded');
+          const btn = sec.querySelector('.btn-expand-category');
+          if (btn) btn.textContent = "▼ Scopri tutti";
+        });
+        document.getElementById('no-results').style.display = "none";
+        return;
+      }
+
+      sections.forEach(sec => sec.classList.add('expanded'));
+
+      cards.forEach(card => {
+        const title = card.querySelector('.micro-track-title').textContent.toLowerCase();
+        if (title.includes(queryStr)) {
+          card.style.display = "flex";
+          foundAny = true;
+        } else {
+          card.style.display = "none";
+        }
+      });
+
+      sections.forEach(sec => {
+        const visibleCards = sec.querySelectorAll('.micro-player-card[style="display: flex;"]');
+        sec.style.display = visibleCards.length > 0 ? "block" : "none";
+      });
+
+      document.getElementById('no-results').style.display = foundAny ? "none" : "block";
+    };
+
+    window.addEventListener('DOMContentLoaded', fetchFirebaseTracks);
+  </script>
+
+</body>
+</html>

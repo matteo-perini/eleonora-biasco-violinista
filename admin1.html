@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pannello Admin | Eleonora Biasco</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ANGOLI RIGOROSAMENTE SQUADRATI E DESIGN SUPER COMPATTO */
+    *, *::before, *::after {
+      border-radius: 0 !important;
+    }
+
+    body {
+      background-color: var(--bg-color, #121212);
+      color: var(--text-color, #f5f5f5);
+      font-family: var(--font-body, 'Montserrat', sans-serif);
+      margin: 0;
+      padding: 0;
+    }
+
+    .admin-wrapper {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px 10px;
+    }
+
+    .admin-box {
+      background: var(--bg-card, rgba(26, 26, 26, 0.9));
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      padding: 16px 20px;
+      width: 100%;
+      max-width: 550px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 10px rgba(212, 175, 55, 0.1);
+      margin-bottom: 12px;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+      padding-bottom: 8px;
+    }
+
+    .admin-header h2 {
+      margin: 0;
+      font-size: 1.15rem;
+      color: var(--primary-color, #d4af37);
+      font-family: var(--font-heading, 'Cinzel', serif);
+    }
+
+    .btn-logout {
+      background: transparent;
+      color: var(--text-muted, #aaaaaa);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 3px 8px;
+      cursor: pointer;
+      font-size: 0.7rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn-logout:hover {
+      color: #ff4d4d;
+      border-color: #ff4d4d;
+    }
+
+    .admin-section-title {
+      color: var(--primary-color, #d4af37);
+      font-family: var(--font-heading, 'Cinzel', serif);
+      font-size: 0.95rem;
+      margin-top: 0;
+      margin-bottom: 10px;
+      border-bottom: 1px dashed rgba(212, 175, 55, 0.3);
+      padding-bottom: 4px;
+    }
+
+    .admin-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .gruppo-input {
+      margin-bottom: 0;
+    }
+
+    .gruppo-input label {
+      color: var(--primary-color, #d4af37);
+      font-weight: 600;
+      margin-bottom: 3px;
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+    }
+
+    .gruppo-input input,
+    .gruppo-input select {
+      width: 100%;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      color: var(--text-color, #f5f5f5);
+      font-size: 0.8rem;
+      box-sizing: border-box;
+      outline: none;
+    }
+
+    .gruppo-input input:focus,
+    .gruppo-input select:focus {
+      border-color: var(--primary-color, #d4af37);
+      box-shadow: 0 0 5px rgba(212, 175, 55, 0.4);
+    }
+
+    .gruppo-input select option {
+      background-color: var(--bg-color, #121212);
+      color: var(--text-color, #f5f5f5);
+    }
+
+    .btn-invia {
+      background: #121212;
+      color: var(--primary-color, #d4af37);
+      border: 1px solid var(--primary-color, #d4af37);
+      padding: 7px 15px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s ease;
+      margin-top: 2px;
+    }
+
+    .btn-invia:hover {
+      background: var(--primary-color, #d4af37);
+      color: #121212;
+      box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+    }
+
+    /* BOTTONE A TENDINA "BRANI" */
+    .dropdown-toggle-btn {
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: var(--primary-color, #d4af37);
+      padding: 7px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+      margin-bottom: 8px;
+    }
+
+    .dropdown-toggle-btn:hover {
+      background: rgba(212, 175, 55, 0.2);
+    }
+
+    /* CONTENITORE A TENDINA (ACCORDION) */
+    .dropdown-content-box {
+      display: none;
+      border-top: 1px solid rgba(212, 175, 55, 0.2);
+      padding-top: 8px;
+    }
+
+    .dropdown-content-box.active {
+      display: block;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .search-input, .filter-select {
+      flex: 1;
+      padding: 5px 8px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      color: var(--text-color, #f5f5f5);
+      font-size: 0.75rem;
+      box-sizing: border-box;
+      outline: none;
+    }
+
+    .search-input:focus, .filter-select:focus {
+      border-color: var(--primary-color, #d4af37);
+    }
+
+    .track-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 3px;
+    }
+
+    .track-list::-webkit-scrollbar {
+      width: 3px;
+    }
+    .track-list::-webkit-scrollbar-thumb {
+      background: var(--primary-color, #d4af37);
+    }
+
+    .track-item {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(212, 175, 55, 0.15);
+      padding: 6px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .track-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      overflow: hidden;
+    }
+
+    .track-item-title {
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .track-item-category {
+      color: var(--primary-color, #d4af37);
+      font-size: 0.65rem;
+      opacity: 0.8;
+    }
+
+    .actions-group {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .btn-action {
+      padding: 3px 6px;
+      cursor: pointer;
+      font-size: 0.65rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-edit {
+      background: rgba(212, 175, 55, 0.15);
+      color: var(--primary-color, #d4af37);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+    }
+
+    .btn-edit:hover {
+      background: var(--primary-color, #d4af37);
+      color: #000;
+    }
+
+    .btn-delete {
+      background: rgba(255, 77, 77, 0.15);
+      color: #ff4d4d;
+      border: 1px solid rgba(255, 77, 77, 0.3);
+    }
+
+    .btn-delete:hover {
+      background: #ff4d4d;
+      color: #000;
+    }
+
+    #login-error {
+      color: #ff4d4d;
+      font-size: 0.75rem;
+      text-align: center;
+      display: none;
+    }
+
+    .status-msg {
+      font-size: 0.75rem;
+      text-align: center;
+      margin-top: -2px;
+      display: none;
+    }
+
+    /* MODALE POPUP PERSONALIZZATO */
+    .custom-popup-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 999999;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+    .custom-popup-overlay.active { display: flex; }
+
+    .custom-popup-box {
+      background: var(--bg-card, #1a1a1a);
+      border: 1px solid var(--primary-color, #d4af37);
+      padding: 20px;
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 20px rgba(212, 175, 55, 0.2);
+    }
+
+    .custom-popup-icon {
+      font-size: 2rem;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .custom-popup-title {
+      color: var(--primary-color, #d4af37);
+      font-family: var(--font-heading, 'Cinzel', serif);
+      font-size: 1.05rem;
+      margin-top: 0;
+      margin-bottom: 6px;
+    }
+
+    .custom-popup-text {
+      color: var(--text-color, #f5f5f5);
+      font-size: 0.82rem;
+      margin-bottom: 18px;
+      line-height: 1.4;
+    }
+
+    .custom-popup-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .custom-popup-btn {
+      flex: 1;
+      padding: 7px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-confirm-yes {
+      background: #ff4d4d;
+      color: #000;
+      border: 1px solid #ff4d4d;
+    }
+    .btn-confirm-yes:hover { background: #ff3333; }
+
+    .btn-confirm-no {
+      background: transparent;
+      color: var(--text-muted, #aaaaaa);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .btn-confirm-no:hover { color: #fff; border-color: #fff; }
+
+    .btn-alert-ok {
+      background: var(--primary-color, #d4af37);
+      color: #121212;
+      border: 1px solid var(--primary-color, #d4af37);
+    }
+
+    /* MODALE MODIFICA BRANO */
+    .edit-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(4px);
+      z-index: 99999;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+    .edit-modal.active { display: flex; }
+  </style>
+</head>
+<body>
+
+  <div class="admin-wrapper">
+
+    <div class="admin-box" id="login-card">
+      <div style="text-align: center; margin-bottom: 15px;">
+        <h2 style="color: var(--primary-color, #d4af37); margin-bottom: 3px;">Accesso Riservato</h2>
+        <p style="color: var(--text-muted, #aaaaaa); font-size: 0.75rem; margin: 0;">Pannello di Gestione</p>
+      </div>
+
+      <form id="login-form" class="admin-form">
+        <div class="gruppo-input">
+          <label for="login-email">Email</label>
+          <input type="text" id="login-email" placeholder="Inserisci email" required>
+        </div>
+        <div class="gruppo-input">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="Inserisci password" required>
+        </div>
+        <div id="login-error">Credenziali errate. Riprova.</div>
+        <button type="submit" class="btn-invia">Accedi</button>
+      </form>
+    </div>
+
+    <div id="admin-panel" style="display: none; width: 100%; max-width: 550px;">
+      
+      <div class="admin-box" style="margin-bottom: 10px; padding: 10px 20px;">
+        <div class="admin-header" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">
+          <h2>Gestione Contenuti</h2>
+          <button type="button" class="btn-logout" onclick="window.logout()">Esci ✕</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
+        <h3 class="admin-section-title">🎵 Gestione Brani Audio</h3>
+
+        <form id="upload-form-audio" class="admin-form">
+          <div class="gruppo-input">
+            <label for="track-title">Titolo del Brano</label>
+            <input type="text" id="track-title" placeholder="Es. Hallelujah..." required>
+          </div>
+          <div class="gruppo-input">
+            <label for="track-category">Categoria</label>
+            <select id="track-category" required>
+              <option value="Leggera">Leggera</option>
+              <option value="Pop">Pop</option>
+              <option value="Colonne sonore">Colonne sonore</option>
+              <option value="Lounge">Lounge</option>
+              <option value="Dance">Dance</option>
+            </select>
+          </div>
+          <div class="gruppo-input">
+            <label for="audio-file">File Audio (MP3 / M4A)</label>
+            <input type="file" id="audio-file" accept=".mp3, .m4a, audio/*" required>
+          </div>
+          <div id="audio-status" class="status-msg"></div>
+          <button type="submit" class="btn-invia" id="btn-submit-audio">➕ Pubblica Brano</button>
+        </form>
+
+        <div class="track-list-section">
+          <button type="button" class="dropdown-toggle-btn" onclick="window.toggleAudioDropdown()">
+            <span>📂 Brani Inseriti (<span id="track-count">0</span>)</span>
+            <span id="audio-arrow">▼</span>
+          </button>
+
+          <div class="dropdown-content-box" id="audio-dropdown-box">
+            <div class="filter-row">
+              <input type="text" id="search-audio-input" class="search-input" placeholder="🔍 Cerca..." onkeyup="window.filterAudioTracks()">
+              <select id="filter-category-select" class="filter-select" onchange="window.filterAudioTracks()">
+                <option value="tutte">Tutte</option>
+                <option value="Leggera">Leggera</option>
+                <option value="Pop">Pop</option>
+                <option value="Colonne sonore">Colonne sonore</option>
+                <option value="Lounge">Lounge</option>
+                <option value="Dance">Dance</option>
+              </select>
+            </div>
+            <ul class="track-list" id="track-list"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-box">
+        <h3 class="admin-section-title">🎬 Gestione Video / Reels</h3>
+
+        <form id="upload-form-video" class="admin-form">
+          <div class="gruppo-input">
+            <label for="video-file">File Video (MP4)</label>
+            <input type="file" id="video-file" accept="video/mp4, video/*" required>
+          </div>
+          <div id="video-status" class="status-msg"></div>
+          <button type="submit" class="btn-invia" id="btn-submit-video">🎬 Pubblica Video</button>
+        </form>
+
+        <div class="track-list-section">
+          <button type="button" class="dropdown-toggle-btn" onclick="window.toggleVideoDropdown()">
+            <span>📂 Video Inseriti (<span id="video-count">0</span>)</span>
+            <span id="video-arrow">▼</span>
+          </button>
+
+          <div class="dropdown-content-box" id="video-dropdown-box">
+            <ul class="track-list" id="video-list"></ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="edit-modal" id="editModal">
+    <div class="admin-box" style="max-width: 350px; margin: 0; padding: 20px;">
+      <h3 style="color: var(--primary-color, #d4af37); margin-top: 0; font-family: var(--font-heading, 'Cinzel', serif); font-size: 1rem; margin-bottom: 10px;">Modifica Brano</h3>
+      <form id="edit-form" style="display: flex; flex-direction: column; gap: 8px;">
+        <input type="hidden" id="edit-doc-id">
+        <div class="gruppo-input">
+          <label for="edit-title">Nuovo Titolo</label>
+          <input type="text" id="edit-title" required>
+        </div>
+        <div class="gruppo-input">
+          <label for="edit-category">Nuova Categoria</label>
+          <select id="edit-category" required>
+            <option value="Leggera">Leggera</option>
+            <option value="Pop">Pop</option>
+            <option value="Colonne sonore">Colonne sonore</option>
+            <option value="Lounge">Lounge</option>
+            <option value="Dance">Dance</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 6px; margin-top: 6px;">
+          <button type="submit" class="btn-invia" style="padding: 6px;">Salva</button>
+          <button type="button" class="btn-invia" style="background: transparent; color: #fff; border-color: rgba(255,255,255,0.3); padding: 6px;" onclick="window.closeEditModal()">Annulla</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="custom-popup-overlay" id="customPopup">
+    <div class="custom-popup-box">
+      <span class="custom-popup-icon" id="popupIcon">⚠️</span>
+      <h3 class="custom-popup-title" id="popupTitle">Conferma</h3>
+      <p class="custom-popup-text" id="popupText">Procedere?</p>
+      <div class="custom-popup-buttons" id="popupButtons"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDpFJSJppEf3YUek4vgbbG9kzyYr0xYj4s",
+      authDomain: "violinista-eleonora.firebaseapp.com",
+      projectId: "violinista-eleonora",
+      storageBucket: "violinista-eleonora.firebasestorage.app",
+      messagingSenderId: "5833623770",
+      appId: "1:5833623770:web:99467a55c0e30abd747de3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    let braniFirebase = [];
+    let videoFirebase = [];
+
+    const loginCard = document.getElementById('login-card');
+    const adminPanel = document.getElementById('admin-panel');
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+
+      if (email === "1" && password === "1") {
+        loginCard.style.display = "none";
+        adminPanel.style.display = "block";
+        loginError.style.display = "none";
+        await Promise.all([caricaBraniFirebase(), caricaVideoFirebase()]);
+      } else {
+        loginError.style.display = "block";
+      }
+    });
+
+    window.logout = function() {
+      adminPanel.style.display = "none";
+      loginCard.style.display = "block";
+      document.getElementById('login-email').value = "";
+      document.getElementById('login-password').value = "";
+    };
+
+    window.mostraConferma = function(titolo, testo, icona, callbackYes) {
+      const overlay = document.getElementById('customPopup');
+      document.getElementById('popupTitle').textContent = titolo;
+      document.getElementById('popupText').textContent = testo;
+      document.getElementById('popupIcon').textContent = icona;
+      
+      const btnContainer = document.getElementById('popupButtons');
+      btnContainer.innerHTML = `
+        <button class="custom-popup-btn btn-confirm-yes" id="popupYesBtn">Sì</button>
+        <button class="custom-popup-btn btn-confirm-no" id="popupNoBtn">No</button>
+      `;
+      overlay.classList.add('active');
+
+      document.getElementById('popupYesBtn').onclick = () => {
+        overlay.classList.remove('active');
+        callbackYes();
+      };
+      document.getElementById('popupNoBtn').onclick = () => {
+        overlay.classList.remove('active');
+      };
+    };
+
+    window.mostraAlert = function(titolo, testo, icona = "✨") {
+      const overlay = document.getElementById('customPopup');
+      document.getElementById('popupTitle').textContent = titolo;
+      document.getElementById('popupText').textContent = testo;
+      document.getElementById('popupIcon').textContent = icona;
+      
+      const btnContainer = document.getElementById('popupButtons');
+      btnContainer.innerHTML = `
+        <button class="custom-popup-btn btn-alert-ok" id="popupOkBtn">OK</button>
+      `;
+      overlay.classList.add('active');
+
+      document.getElementById('popupOkBtn').onclick = () => {
+        overlay.classList.remove('active');
+      };
+    };
+
+    window.toggleAudioDropdown = function() {
+      const box = document.getElementById('audio-dropdown-box');
+      const arrow = document.getElementById('audio-arrow');
+      box.classList.toggle('active');
+      arrow.textContent = box.classList.contains('active') ? "▲" : "▼";
+    };
+
+    window.toggleVideoDropdown = function() {
+      const box = document.getElementById('video-dropdown-box');
+      const arrow = document.getElementById('video-arrow');
+      box.classList.toggle('active');
+      arrow.textContent = box.classList.contains('active') ? "▲" : "▼";
+    };
+
+    async function caricaBraniFirebase() {
+      try {
+        const q = query(collection(db, "repertorio"), orderBy("dataCaricamento", "desc"));
+        const querySnapshot = await getDocs(q);
+        braniFirebase = [];
+        querySnapshot.forEach((docSnap) => {
+          braniFirebase.push({ docId: docSnap.id, ...docSnap.data() });
+        });
+        renderAudioList(braniFirebase);
+      } catch (err) { console.error(err); }
+    }
+
+    function renderAudioList(items) {
+      const trackList = document.getElementById('track-list');
+      const trackCount = document.getElementById('track-count');
+      trackList.innerHTML = "";
+      trackCount.textContent = items.length;
+
+      if (items.length === 0) {
+        trackList.innerHTML = `<li style="color: var(--text-muted); text-align: center; font-size: 0.72rem; padding: 6px;">Nessun brano.</li>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'track-item';
+        li.innerHTML = `
+          <div class="track-item-info">
+            <span class="track-item-title">🎻 ${item.titolo}</span>
+            <span class="track-item-category">${item.categoria}</span>
+          </div>
+          <div class="actions-group">
+            <button class="btn-action btn-edit" onclick="window.openEditModal('${item.docId}', '${item.titolo.replace(/'/g, "\\'")}', '${item.categoria}')">Mod</button>
+            <button class="btn-action btn-delete" onclick="window.confermaEliminaBrano('${item.docId}', '${item.storagePath || ''}')">Del</button>
+          </div>
+        `;
+        trackList.appendChild(li);
+      });
+    }
+
+    window.filterAudioTracks = function() {
+      const queryStr = document.getElementById('search-audio-input').value.toLowerCase().trim();
+      const selectedCat = document.getElementById('filter-category-select').value;
+
+      const braniFiltrati = braniFirebase.filter(b => {
+        const matchTitle = b.titolo.toLowerCase().includes(queryStr);
+        const matchCat = (selectedCat === "tutte" || b.categoria === selectedCat);
+        return matchTitle && matchCat;
+      });
+      renderAudioList(braniFiltrati);
+    };
+
+    document.getElementById('upload-form-audio').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const titolo = document.getElementById('track-title').value.trim();
+      const categoria = document.getElementById('track-category').value;
+      const file = document.getElementById('audio-file').files[0];
+      const status = document.getElementById('audio-status');
+      const btn = document.getElementById('btn-submit-audio');
+
+      if (!titolo || !file) return;
+
+      btn.disabled = true;
+      status.style.display = "block";
+      status.style.color = "var(--primary-color)";
+      status.textContent = "Caricamento...";
+
+      const fileRef = ref(storage, `repertorio/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(fileRef, file);
+
+      uploadTask.on('state_changed', 
+        (snap) => {
+          const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+          status.textContent = `Caricamento: ${p}%`;
+        }, 
+        (err) => { status.style.color = "#ff4d4d"; status.textContent = "Errore."; btn.disabled = false; }, 
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          try {
+            await addDoc(collection(db, "repertorio"), {
+              titolo: titolo,
+              categoria: categoria,
+              audioUrl: downloadURL,
+              storagePath: uploadTask.snapshot.ref.fullPath,
+              dataCaricamento: serverTimestamp()
+            });
+            status.style.color = "#2ecc71";
+            status.textContent = "✅ Fatto!";
+            document.getElementById('upload-form-audio').reset();
+            await caricaBraniFirebase();
+            window.mostraAlert("Successo", "Brano pubblicato!", "🎵");
+          } catch (err) { status.style.color = "#ff4d4d"; status.textContent = "Errore DB."; }
+          finally { btn.disabled = false; setTimeout(() => { status.style.display = "none"; }, 2500); }
+        }
+      );
+    });
+
+    window.openEditModal = function(docId, currentTitle, currentCat) {
+      document.getElementById('edit-doc-id').value = docId;
+      document.getElementById('edit-title').value = currentTitle;
+      document.getElementById('edit-category').value = currentCat;
+      document.getElementById('editModal').classList.add('active');
+    };
+
+    window.closeEditModal = function() {
+      document.getElementById('editModal').classList.remove('active');
+    };
+
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const docId = document.getElementById('edit-doc-id').value;
+      const newTitle = document.getElementById('edit-title').value.trim();
+      const newCat = document.getElementById('edit-category').value;
+
+      if (!docId || !newTitle) return;
+
+      try {
+        await updateDoc(doc(db, "repertorio", docId), {
+          titolo: newTitle,
+          categoria: newCat
+        });
+        window.closeEditModal();
+        await caricaBraniFirebase();
+        window.mostraAlert("Modifica", "Brano aggiornato!", "✨");
+      } catch (err) { window.mostraAlert("Errore", "Impossibile aggiornare.", "❌"); }
+    });
+
+    window.confermaEliminaBrano = function(docId, storagePath) {
+      window.mostraConferma(
+        "Elimina",
+        "Vuoi eliminare questo brano?",
+        "🗑️",
+        async () => {
+          try {
+            await deleteDoc(doc(db, "repertorio", docId));
+            if (storagePath) await deleteObject(ref(storage, storagePath)).catch(e => {});
+            await caricaBraniFirebase();
+            window.mostraAlert("Rimosso", "Brano eliminato.", "✅");
+          } catch (err) { window.mostraAlert("Errore", "Impossibile eliminare.", "❌"); }
+        }
+      );
+    };
+
+    async function caricaVideoFirebase() {
+      try {
+        const q = query(collection(db, "video_reels"), orderBy("dataCaricamento", "desc"));
+        const querySnapshot = await getDocs(q);
+        videoFirebase = [];
+        querySnapshot.forEach((docSnap) => {
+          videoFirebase.push({ docId: docSnap.id, ...docSnap.data() });
+        });
+        renderVideoList(videoFirebase);
+      } catch (err) { console.error(err); }
+    }
+
+    function renderVideoList(items) {
+      const videoList = document.getElementById('video-list');
+      const videoCount = document.getElementById('video-count');
+      videoList.innerHTML = "";
+      videoCount.textContent = items.length;
+
+      if (items.length === 0) {
+        videoList.innerHTML = `<li style="color: var(--text-muted); text-align: center; font-size: 0.72rem; padding: 6px;">Nessun video.</li>`;
+        return;
+      }
+
+      items.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'track-item';
+        li.innerHTML = `
+          <div class="track-item-info">
+            <span class="track-item-title">🎬 Video ${items.length - index}</span>
+          </div>
+          <button class="btn-action btn-delete" onclick="window.confermaEliminaVideo('${item.docId}', '${item.storagePath || ''}')">Del</button>
+        `;
+        videoList.appendChild(li);
+      });
+    }
+
+    document.getElementById('upload-form-video').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const file = document.getElementById('video-file').files[0];
+      const status = document.getElementById('video-status');
+      const btn = document.getElementById('btn-submit-video');
+
+      if (!file) return;
+
+      btn.disabled = true;
+      status.style.display = "block";
+      status.style.color = "var(--primary-color)";
+      status.textContent = "Caricamento...";
+
+      const fileRef = ref(storage, `video_reels/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(fileRef, file);
+
+      uploadTask.on('state_changed', 
+        (snap) => {
+          const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+          status.textContent = `Caricamento: ${p}%`;
+        }, 
+        (err) => { status.style.color = "#ff4d4d"; status.textContent = "Errore."; btn.disabled = false; }, 
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          try {
+            await addDoc(collection(db, "video_reels"), {
+              videoUrl: downloadURL,
+              storagePath: uploadTask.snapshot.ref.fullPath,
+              dataCaricamento: serverTimestamp()
+            });
+            status.style.color = "#2ecc71";
+            status.textContent = "✅ Fatto!";
+            document.getElementById('upload-form-video').reset();
+            await caricaVideoFirebase();
+            window.mostraAlert("Successo", "Video pubblicato!", "🎬");
+          } catch (err) { status.style.color = "#ff4d4d"; status.textContent = "Errore DB."; }
+          finally { btn.disabled = false; setTimeout(() => { status.style.display = "none"; }, 2500); }
+        }
+      );
+    });
+
+    window.confermaEliminaVideo = function(docId, storagePath) {
+      window.mostraConferma(
+        "Elimina",
+        "Vuoi eliminare questo video?",
+        "🗑️",
+        async () => {
+          try {
+            await deleteDoc(doc(db, "video_reels", docId));
+            if (storagePath) await deleteObject(ref(storage, storagePath)).catch(e => {});
+            await caricaVideoFirebase();
+            window.mostraAlert("Rimosso", "Video eliminato.", "✅");
+          } catch (err) { window.mostraAlert("Errore", "Impossibile eliminare.", "❌"); }
+        }
+      );
+    };
+  </script>
+
+</body>
+</html>

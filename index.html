@@ -6,10 +6,206 @@
   <title>Eleonora Biasco | Violinista Professionista</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Great+Vibes&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    /* STILI CAROSELLI CON FRECCE E PROPORZIONI */
+    .reels-carousel-wrapper {
+      position: relative;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+
+    .reels-track {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      padding: 15px 5px 25px 5px;
+      align-items: center;
+    }
+
+    .reels-track::-webkit-scrollbar { display: none; }
+    .reels-track { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* CARD REEL PERFETTA (9:16) */
+    .video-wrapper.reel-card {
+      flex: 0 0 190px !important;
+      width: 190px !important;
+      aspect-ratio: 9 / 16 !important;
+      height: auto !important;
+      scroll-snap-align: center;
+      position: relative;
+      background: #000;
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 0 !important;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .video-wrapper.reel-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary-color, #d4af37);
+      box-shadow: 0 6px 18px rgba(212, 175, 55, 0.35);
+    }
+
+    .video-wrapper.reel-card video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    /* Icona Play centrale */
+    .play-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid #d4af37;
+      color: #d4af37;
+      border-radius: 50% !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      padding-left: 2px;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 2;
+    }
+
+    .video-wrapper.reel-card:hover .play-overlay {
+      background: #d4af37;
+      color: #000;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    .reel-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 8px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.92));
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-align: left;
+      pointer-events: none;
+      border-top: 1px solid rgba(212, 175, 55, 0.2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      z-index: 2;
+    }
+
+    /* FRECCE DI SCORRIMENTO PC */
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 38px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid var(--primary-color, #d4af37);
+      color: var(--primary-color, #d4af37);
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.3s ease;
+      border-radius: 0 !important;
+    }
+
+    .carousel-arrow:hover {
+      background: var(--primary-color, #d4af37);
+      color: #000000;
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+    }
+
+    .carousel-arrow.prev { left: -15px; }
+    .carousel-arrow.next { right: -15px; }
+
+    /* MODAL VIDEO POPUP SCHERMO INTERO */
+    .video-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.92);
+      z-index: 99999;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(6px);
+    }
+
+    .video-modal.active {
+      display: flex;
+    }
+
+    .modal-content-wrapper {
+      position: relative;
+      max-width: 90vw;
+      max-height: 82vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #modalVideo {
+      max-width: 100%;
+      max-height: 80vh;
+      width: auto;
+      height: auto;
+      border: 1px solid #d4af37;
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+      background: #000;
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 20px;
+      right: 25px;
+      color: #d4af37;
+      font-size: 2.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 100000;
+      transition: color 0.3s ease;
+      line-height: 1;
+    }
+
+    .close-modal:hover {
+      color: #ffffff;
+    }
+
+    @media (max-width: 768px) {
+      .carousel-arrow {
+        display: none; /* Swipe touch su mobile */
+      }
+      .video-wrapper.reel-card {
+        flex: 0 0 150px !important;
+        width: 150px !important;
+      }
+      #modalVideo {
+        max-height: 75vh;
+      }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Menu di Navigazione Superiore -->
   <header>
     <a href="#home" class="logo-link">
       <img src="img/foto22.png" alt="Eleonora Biasco Logo" class="header-logo" onerror="this.onerror=null; this.src='img/foto22.jpg';">
@@ -33,7 +229,6 @@
     </nav>
   </header>
 
-  <!-- Hero Section -->
   <section id="home" class="hero" style="background: url('img/foto23.jpeg') center/cover no-repeat;">
     <div class="hero-overlay"></div>
     <div class="hero-content">
@@ -43,7 +238,6 @@
     </div>
   </section>
 
-  <!-- Sezione Biografia -->
   <section id="bio" class="bio-section">
     <div class="container">
       <h2 class="reveal-item">Chi Sono</h2>
@@ -61,7 +255,6 @@
     </div>
   </section>
 
-  <!-- Sezione Cosa Posso Fare (Servizi) -->
   <section id="servizi" class="servizi-section">
     <div class="container">
       <h2 class="reveal-item">Cosa Posso Fare Per Il Tuo Evento</h2>
@@ -101,7 +294,6 @@
     </div>
   </section>
 
-  <!-- Galleria Fotografica Infinita -->
   <section id="gallery" class="gallery-section">
     <div class="container">
       <h2 class="reveal-item">Galleria Fotografica</h2>
@@ -112,102 +304,124 @@
     </div>
   </section>
 
-  <!-- Sezione Audio & Demo -->
   <section id="audio" class="audio-section">
     <div class="container">
       <h2 class="reveal-item">Ascolta le Tracce Demo</h2>
       <p class="subtitle reveal-item">Estratti musicali in alta qualità per scoprire tutte le sfumature del violino</p>
       
-      <div class="audio-grid">
-        <div class="audio-card reveal-item">
-          <h3>🎻 Hallelujah</h3>
-          <p class="audio-desc">Demo • Live Violin</p>
-          <audio controls preload="none" class="custom-audio">
-            <source src="audio/demo1.m4a" type="audio/mp4">
-            Il tuo browser non supporta l'elemento audio.
-          </audio>
+      <div class="reels-carousel-wrapper reveal-item">
+        <button class="carousel-arrow prev" id="audio-prev" title="Precedente">❮</button>
+        
+        <div class="audio-grid" id="audio-carousel-track">
+          <div class="audio-card reveal-item">
+            <h3>🎻 Hallelujah</h3>
+            <p class="audio-desc">Demo • Live Violin</p>
+            <audio controls preload="none" class="custom-audio">
+              <source src="audio/demo1.m4a" type="audio/mp4">
+            </audio>
+          </div>
+
+          <div class="audio-card reveal-item">
+            <h3>🎻 Chi Mai</h3>
+            <p class="audio-desc">Demo • Live Violin</p>
+            <audio controls preload="none" class="custom-audio">
+              <source src="audio/demo2.m4a" type="audio/mp4">
+            </audio>
+          </div>
+
+          <div class="audio-card reveal-item">
+            <h3>🎻 Can't Help Falling in Love</h3>
+            <p class="audio-desc">Demo • Live Violin</p>
+            <audio controls preload="none" class="custom-audio">
+              <source src="audio/demo3.m4a" type="audio/mp4">
+            </audio>
+          </div>
+
+          <div class="audio-card reveal-item">
+            <h3>🎻 Die With a Smile</h3>
+            <p class="audio-desc">Demo • Live Violin</p>
+            <audio controls preload="none" class="custom-audio">
+              <source src="audio/demo4.m4a" type="audio/mp4">
+            </audio>
+          </div>
+
+          <div class="audio-card reveal-item">
+            <h3>🎻 You Rise Me Up</h3>
+            <p class="audio-desc">Demo • Live Violin</p>
+            <audio controls preload="none" class="custom-audio">
+              <source src="audio/demo5.m4a" type="audio/mp4">
+            </audio>
+          </div>
         </div>
 
-        <div class="audio-card reveal-item">
-          <h3>🎻 Chi Mai</h3>
-          <p class="audio-desc">Demo • Live Violin</p>
-          <audio controls preload="none" class="custom-audio">
-            <source src="audio/demo2.m4a" type="audio/mp4">
-            Il tuo browser non supporta l'elemento audio.
-          </audio>
-        </div>
-
-        <div class="audio-card reveal-item">
-          <h3>🎻 Can't Help Falling in Love</h3>
-          <p class="audio-desc">Demo • Live Violin</p>
-          <audio controls preload="none" class="custom-audio">
-            <source src="audio/demo3.m4a" type="audio/mp4">
-            Il tuo browser non supporta l'elemento audio.
-          </audio>
-        </div>
-
-        <div class="audio-card reveal-item">
-          <h3>🎻 Die With a Smile</h3>
-          <p class="audio-desc">Demo • Live Violin</p>
-          <audio controls preload="none" class="custom-audio">
-            <source src="audio/demo4.m4a" type="audio/mp4">
-            Il tuo browser non supporta l'elemento audio.
-          </audio>
-        </div>
-
-        <div class="audio-card reveal-item">
-          <h3>🎻 You Rise Me Up</h3>
-          <p class="audio-desc">Demo • Live Violin</p>
-          <audio controls preload="none" class="custom-audio">
-            <source src="audio/demo5.m4a" type="audio/mp4">
-            Il tuo browser non supporta l'elemento audio.
-          </audio>
-        </div>
+        <button class="carousel-arrow next" id="audio-next" title="Successivo">❯</button>
       </div>
+
+      <div class="reveal-item" style="text-align: center; margin-top: 35px;">
+        <a href="repertorio.html" class="btn-hero">
+          <span>🎵 Ascolta la Playlist Completa</span>
+        </a>
+      </div>
+
     </div>
   </section>
 
-  <!-- Sezione Video / Performance -->
   <section id="media" class="media-section">
     <div class="container">
       <h2 class="reveal-item">Ascolta & Guarda</h2>
-      <p class="subtitle reveal-item">Clicca su un video per aprirlo in primo piano</p>
-      <div class="media-grid">
-        <div class="video-wrapper reveal-item" data-src="video/video1.mp4">
-          <video muted preload="metadata">
-            <source src="video/video1.mp4" type="video/mp4">
-            <source src="video/video1.mov" type="video/quicktime">
-          </video>
-          <div class="play-overlay">▶</div>
+      <p class="subtitle reveal-item">Scorri i video e clicca su uno per riprodurlo a schermo intero</p>
+
+      <div class="reels-carousel-wrapper reveal-item">
+        <button class="carousel-arrow prev" id="reel-prev" title="Precedente">❮</button>
+        
+        <div class="reels-track" id="reels-track">
+          <div class="video-wrapper reel-card" data-src="video/video1.mp4">
+            <video muted preload="metadata">
+              <source src="video/video1.mp4" type="video/mp4">
+              <source src="video/video1.mov" type="video/quicktime">
+            </video>
+            <div class="play-overlay">▶</div>
+            <div class="reel-caption">🎻 Performance Live</div>
+          </div>
+
+          <div class="video-wrapper reel-card" data-src="video/video2.mp4">
+            <video muted preload="metadata">
+              <source src="video/video2.mp4" type="video/mp4">
+              <source src="video/video2.mov" type="video/quicktime">
+            </video>
+            <div class="play-overlay">▶</div>
+            <div class="reel-caption">🎻 Performance Live</div>
+          </div>
+
+          <div class="video-wrapper reel-card" data-src="video/video3.mp4">
+            <video muted preload="metadata">
+              <source src="video/video3.mp4" type="video/mp4">
+              <source src="video/video3.mov" type="video/quicktime">
+            </video>
+            <div class="play-overlay">▶</div>
+            <div class="reel-caption">🎻 Performance Live</div>
+          </div>
+
+          <div class="video-wrapper reel-card" data-src="video/video4.mp4">
+            <video muted preload="metadata">
+              <source src="video/video4.mp4" type="video/mp4">
+              <source src="video/video4.mov" type="video/quicktime">
+            </video>
+            <div class="play-overlay">▶</div>
+            <div class="reel-caption">🎻 Performance Live</div>
+          </div>
+
+          <div class="video-wrapper reel-card" data-src="video/video5.mp4">
+            <video muted preload="metadata">
+              <source src="video/video5.mp4" type="video/mp4">
+              <source src="video/video5.mov" type="video/quicktime">
+            </video>
+            <div class="play-overlay">▶</div>
+            <div class="reel-caption">🎻 Performance Live</div>
+          </div>
         </div>
-        <div class="video-wrapper reveal-item" data-src="video/video2.mp4">
-          <video muted preload="metadata">
-            <source src="video/video2.mp4" type="video/mp4">
-            <source src="video/video2.mov" type="video/quicktime">
-          </video>
-          <div class="play-overlay">▶</div>
-        </div>
-        <div class="video-wrapper reveal-item" data-src="video/video3.mp4">
-          <video muted preload="metadata">
-            <source src="video/video3.mp4" type="video/mp4">
-            <source src="video/video3.mov" type="video/quicktime">
-          </video>
-          <div class="play-overlay">▶</div>
-        </div>
-        <div class="video-wrapper reveal-item" data-src="video/video4.mp4">
-          <video muted preload="metadata">
-            <source src="video/video4.mp4" type="video/mp4">
-            <source src="video/video4.mov" type="video/quicktime">
-          </video>
-          <div class="play-overlay">▶</div>
-        </div>
-        <div class="video-wrapper reveal-item" data-src="video/video5.mp4">
-          <video muted preload="metadata">
-            <source src="video/video5.mp4" type="video/mp4">
-            <source src="video/video5.mov" type="video/quicktime">
-          </video>
-          <div class="play-overlay">▶</div>
-        </div>
+
+        <button class="carousel-arrow next" id="reel-next" title="Successivo">❯</button>
       </div>
     </div>
   </section>
@@ -219,7 +433,6 @@
     </div>
   </div>
 
-  <!-- Sezione Repertorio -->
   <section id="repertorio" class="repertorio-section">
     <div class="container">
       <h2 class="reveal-item">Repertorio</h2>
@@ -251,7 +464,6 @@
     </div>
   </section>
 
-  <!-- Sezione Didattica -->
   <section id="didattica" class="didattica-section">
     <div class="container">
       <h2 class="reveal-item">Didattica & Lezioni</h2>
@@ -267,13 +479,11 @@
     </div>
   </section>
 
-  <!-- Sezione Anteprima Recensioni Dinamiche -->
   <section id="recensioni" class="recensioni-section">
     <div class="container">
       <h2 class="reveal-item">Dicono di Me</h2>
       <p class="subtitle reveal-item">Alcuni pensieri di chi ha ascoltato la mia musica</p>
       
-      <!-- Contenitore collegato a Google Sheets -->
       <div class="audio-grid reveal-item" id="anteprima-recensioni-grid">
         <p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Caricamento recensioni...</p>
       </div>
@@ -286,21 +496,18 @@
     </div>
   </section>
 
-  <!-- Badge WhatsApp Fluttuante -->
   <div class="floating-buttons" id="floatingButtons">
     <a href="https://wa.me/393440124111?text=Ciao,%20vorrei%20ricevere%20maggiori%20informazioni." target="_blank" class="float-btn whatsapp-float" title="Scrivi su WhatsApp">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
     </a>
   </div>
 
-  <!-- Footer -->
   <footer id="contatti">
     <a href="#home" class="footer-top-bar" title="Torna all'inizio">
       ↑ Torna all'inizio della pagina
     </a>
     <div class="footer-content">
       
-      <!-- Colonna Sinistra: Social e Contatti -->
       <div class="footer-col footer-col-left">
         <a href="https://www.instagram.com/_eleonorabiasco_violinist_?stkn=MXVkNWNlazJsZmQwcQ==" target="_blank" class="footer-social-link">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E1306C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
@@ -317,14 +524,12 @@
         <p class="footer-pec"><strong>PEC:</strong> <a href="mailto:biascoeleonora@pec.it">biascoeleonora@pec.it</a></p>
       </div>
 
-      <!-- Colonna Centrale: Località, Telefono, Email -->
       <div class="footer-col footer-col-mid">
         <p class="footer-highlight"><strong>Località:</strong> Jesolo (VE)</p>
         <p class="footer-highlight"><strong>Telefono:</strong> <a href="tel:+393440124111">+39 344 0124111</a></p>
         <p class="footer-highlight"><strong>Email:</strong> <a href="mailto:biascoeleonora95@gmail.com">biascoeleonora95@gmail.com</a></p>
       </div>
 
-      <!-- Colonna Destra: Note Legali -->
       <div class="footer-col footer-col-right">
         <div class="footer-right-desktop">
           <p class="footer-right-title">Privacy e Note Legali</p>
@@ -343,20 +548,60 @@
     </div>
   </footer>
 
-  <!-- SCRIPT JAVASCRIPT COMPLETI -->
-  <script>
-    // 1. Animazioni allo scroll
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.1
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDpFJSJppEf3YUek4vgbbG9kzyYr0xYj4s",
+      authDomain: "violinista-eleonora.firebaseapp.com",
+      projectId: "violinista-eleonora",
+      storageBucket: "violinista-eleonora.firebasestorage.app",
+      messagingSenderId: "5833623770",
+      appId: "1:5833623770:web:99467a55c0e30abd747de3"
     };
 
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function fetchFirebaseVideos() {
+      try {
+        const q = query(collection(db, "video_reels"), orderBy("dataCaricamento", "desc"));
+        const querySnapshot = await getDocs(q);
+        const reelsTrack = document.getElementById('reels-track');
+
+        if (!reelsTrack) return;
+
+        querySnapshot.forEach((docSnap) => {
+          const videoData = docSnap.data();
+          const card = document.createElement('div');
+          card.className = 'video-wrapper reel-card';
+          card.setAttribute('data-src', videoData.videoUrl);
+          card.innerHTML = `
+            <video muted preload="metadata">
+              <source src="${videoData.videoUrl}" type="video/mp4">
+            </video>
+            <div class="play-overlay">▶</div>
+            <div class="reel-caption">🎻 Performance Live</div>
+          `;
+          reelsTrack.insertBefore(card, reelsTrack.firstChild);
+        });
+
+        bindVideoModalEvents();
+      } catch (err) {
+        console.error("Errore recupero video dinamici:", err);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', fetchFirebaseVideos);
+  </script>
+
+  <script>
+    // Intersection Observer per animazioni reveal
+    const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
     const revealObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('active');
-        }
+        if (entry.isIntersecting) { entry.target.classList.add('active'); }
       });
     }, observerOptions);
 
@@ -364,15 +609,13 @@
       revealObserver.observe(element);
     });
 
-    // 2. Nasconde il pulsante WhatsApp sopra il footer
+    // Tasto WhatsApp Fluttuante
     window.addEventListener('scroll', () => {
       const footer = document.querySelector('footer');
       const floatingButtons = document.getElementById('floatingButtons');
       if (footer && floatingButtons) {
         const footerRect = footer.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        
-        if (footerRect.top < windowHeight) {
+        if (footerRect.top < window.innerHeight) {
           floatingButtons.classList.add('hidden');
         } else {
           floatingButtons.classList.remove('hidden');
@@ -380,7 +623,7 @@
       }
     });
 
-    // 3. Galleria fotografica infinita
+    // Slider Galleria Foto
     const track = document.getElementById('sliderTrack');
     if (track) {
       let slidesHTML = '';
@@ -405,71 +648,81 @@
     `;
     try { styleSheet.insertRule(keyframes, styleSheet.cssRules.length); } catch (e) {}
 
-    // 4. Modal Video Player
-    const videoModal = document.getElementById('videoModal');
-    const modalVideo = document.getElementById('modalVideo');
-    const closeModal = document.getElementById('closeModal');
-    const videoWrappers = document.querySelectorAll('.video-wrapper');
+    // FRECCE SCORRIMENTO CAROSELLO AUDIO (PC)
+    const audioTrack = document.getElementById('audio-carousel-track');
+    const audioPrev = document.getElementById('audio-prev');
+    const audioNext = document.getElementById('audio-next');
 
-    function pauseAllVideos() {
-      document.querySelectorAll('video').forEach(vid => {
-        vid.pause();
+    if (audioPrev && audioNext && audioTrack) {
+      audioPrev.addEventListener('click', () => {
+        audioTrack.scrollBy({ left: -300, behavior: 'smooth' });
+      });
+      audioNext.addEventListener('click', () => {
+        audioTrack.scrollBy({ left: 300, behavior: 'smooth' });
       });
     }
 
-    document.querySelectorAll('video').forEach(videoElement => {
-      videoElement.addEventListener('play', () => {
-        document.querySelectorAll('video').forEach(other => {
-          if (other !== videoElement) {
-            other.pause();
-          }
-        });
-      });
-    });
+    // FRECCE SCORRIMENTO CAROSELLO REELS (PC)
+    const reelsTrack = document.getElementById('reels-track');
+    const reelPrev = document.getElementById('reel-prev');
+    const reelNext = document.getElementById('reel-next');
 
-    videoWrappers.forEach(wrapper => {
-      wrapper.addEventListener('click', () => {
-        pauseAllVideos();
-        const src = wrapper.getAttribute('data-src');
-        modalVideo.src = src;
-        videoModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        modalVideo.play();
+    if (reelPrev && reelNext && reelsTrack) {
+      reelPrev.addEventListener('click', () => {
+        reelsTrack.scrollBy({ left: -220, behavior: 'smooth' });
       });
-    });
+      reelNext.addEventListener('click', () => {
+        reelsTrack.scrollBy({ left: 220, behavior: 'smooth' });
+      });
+    }
+
+    // MODAL VIDEO POPUP
+    const videoModal = document.getElementById('videoModal');
+    const modalVideo = document.getElementById('modalVideo');
+    const closeModal = document.getElementById('closeModal');
+
+    function pauseAllVideos() {
+      document.querySelectorAll('video').forEach(vid => vid.pause());
+    }
+
+    function bindVideoModalEvents() {
+      const videoWrappers = document.querySelectorAll('.video-wrapper');
+      videoWrappers.forEach(wrapper => {
+        wrapper.onclick = () => {
+          pauseAllVideos();
+          const videoSrc = wrapper.getAttribute('data-src');
+          if (videoSrc && modalVideo && videoModal) {
+            modalVideo.src = videoSrc;
+            videoModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            modalVideo.play();
+          }
+        };
+      });
+    }
 
     function closeVideoModal() {
-      if (modalVideo) {
-        modalVideo.pause();
-        modalVideo.src = '';
-      }
-      if (videoModal) {
-        videoModal.classList.remove('active');
-      }
+      if (modalVideo) { modalVideo.pause(); modalVideo.src = ''; }
+      if (videoModal) { videoModal.classList.remove('active'); }
       document.body.style.overflow = 'auto';
     }
 
     if (closeModal) closeModal.addEventListener('click', closeVideoModal);
-    
     if (videoModal) {
       videoModal.addEventListener('click', (e) => {
-        if (e.target === videoModal) {
-          closeVideoModal();
-        }
+        if (e.target === videoModal) closeVideoModal();
       });
     }
-
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeVideoModal();
-      }
+      if (e.key === 'Escape') closeVideoModal();
     });
 
-    // 5. Caricamento dinamico delle ultime 3 recensioni dal Foglio Google con testo troncato
+    bindVideoModalEvents();
+
+    // Caricamento Anteprima Recensioni
     async function caricaAnteprimaHome() {
       const grid = document.getElementById("anteprima-recensioni-grid");
       if (!grid) return;
-
       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqTPhG3_Zh9LP5reIK44uJzNso_5S_YFrKEc6AIKn4XDzNOL24M_gRD0AsLbmp_vrX/exec";
 
       try {
@@ -483,8 +736,6 @@
           ultimeTre.forEach(rec => {
             const numStelle = parseInt(rec.voto) || 5;
             const stelleStr = "⭐".repeat(numStelle);
-
-            // Tronca il testo se supera 140 caratteri e aggiunge i puntini
             let messaggioTesto = rec.messaggio || "";
             if (messaggioTesto.length > 140) {
               messaggioTesto = messaggioTesto.substring(0, 140) + "...";
@@ -503,7 +754,6 @@
           grid.innerHTML = `<p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Ancora nessuna recensione. Sii il primo a lasciarne una!</p>`;
         }
       } catch (err) {
-        console.error("Errore nel caricamento dell'anteprima:", err);
         grid.innerHTML = `<p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Impossibile caricare le recensioni al momento.</p>`;
       }
     }

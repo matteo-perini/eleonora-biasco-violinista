@@ -12,6 +12,26 @@
       border-radius: 0 !important;
     }
 
+    /* HEADER CORRETTO PER MOBILE */
+    .header-repertorio-custom {
+      padding: 25px 15px 15px 15px;
+      text-align: center;
+    }
+
+    .btn-back-custom {
+      display: inline-block;
+      color: var(--primary-color, #d4af37);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      transition: opacity 0.3s ease;
+    }
+
+    .btn-back-custom:hover {
+      opacity: 0.8;
+    }
+
     /* CONTENITORE COMPATTO E RIDOTTO */
     .repertorio-compact-container {
       max-width: 580px;
@@ -164,12 +184,10 @@
 </head>
 <body>
 
-  <div class="header-recensioni" style="padding: 15px 10px 10px;">
-    <div class="container-header">
-      <a href="index.html" class="btn-back" style="font-size: 0.75rem;">← Torna alla Home</a>
-      <h1 style="font-size: 1.3rem; margin-top: 5px;">Repertorio Completo</h1>
-      <p class="subtitle" style="margin-top: 2px; font-size: 0.75rem;">Seleziona un brano per l'ascolto immediato</p>
-    </div>
+  <div class="header-repertorio-custom">
+    <a href="index.html" class="btn-back-custom">← Torna alla Home</a>
+    <h1 style="font-size: 1.3rem; margin: 0 0 4px 0; color: var(--primary-color, #d4af37); font-family: var(--font-heading, 'Cinzel', serif);">Repertorio Completo</h1>
+    <p class="subtitle" style="margin: 0; font-size: 0.75rem; color: var(--text-muted, #aaaaaa);">Seleziona un brano per l'ascolto immediato</p>
   </div>
 
   <div class="repertorio-compact-container">
@@ -261,7 +279,7 @@
 
         querySnapshot.forEach((docSnap) => {
           const track = docSnap.data();
-          const docId = docSnap.id; // ID UNIVOCO DEL DOCUMENTO FIREBASE
+          const docId = docSnap.id;
           const catRaw = track.categoria ? track.categoria.toLowerCase() : 'leggera';
           
           let containerId = 'list-leggera';
@@ -276,7 +294,7 @@
           const container = document.getElementById(containerId);
           if (container) {
             categoryCounts[catKey]++;
-            const audioId = `audio-${docId}`; // ID AUDIO UNIVOCO E SICURO
+            const audioId = `audio-${docId}`;
             const isExtra = categoryCounts[catKey] > 3 ? 'track-extra' : '';
 
             const card = document.createElement('div');

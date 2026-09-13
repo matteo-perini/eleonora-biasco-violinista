@@ -43,11 +43,88 @@
       padding: 20px 18px !important;
     }
 
-    /* FORZA IL PLAYER AUDIO A RESTARE SEMPRE ESTESO SU QUALSIASI DISPOSITIVO */
-    .custom-audio {
-      width: 100% !important;
-      min-width: 280px !important;
-      display: block !important;
+    /* STILE CUSTOM AUDIO PLAYER (Elegante, sempre aperto e coordinato) */
+    .custom-player {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      background: rgba(20, 20, 20, 0.9);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      padding: 10px 12px;
+      border-radius: 6px;
+      box-sizing: border-box;
+      margin-top: 12px;
+    }
+
+    .player-play-btn {
+      background: #d4af37;
+      color: #000;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .player-play-btn:hover {
+      transform: scale(1.08);
+      background: #ffffff;
+    }
+
+    .player-progress-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-grow: 1;
+    }
+
+    .player-current-time, .player-duration {
+      font-size: 0.72rem;
+      color: #b5b5b5;
+      min-width: 30px;
+      text-align: center;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .player-seekbar {
+      flex-grow: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.2);
+      height: 5px;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .player-seekbar::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #d4af37;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .player-seekbar::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .player-seekbar::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #d4af37;
+      cursor: pointer;
+      border: none;
     }
 
     /* CARD REEL PERFETTA (9:16) */
@@ -221,12 +298,12 @@
         flex: 0 0 150px !important;
         width: 150px !important;
       }
-      /* Card audio mobile allargata per mantenere sempre aperto il player */
+      /* Card audio mobile ottimizzata per il custom player */
       .audio-grid .audio-card {
-        flex: 0 0 330px !important;
-        width: 330px !important;
-        min-width: 330px !important;
-        padding: 16px 12px !important;
+        flex: 0 0 300px !important;
+        width: 300px !important;
+        min-width: 300px !important;
+        padding: 16px 14px !important;
       }
       #modalVideo {
         max-height: 75vh;
@@ -352,45 +429,92 @@
         <button class="carousel-arrow prev" id="audio-prev" title="Precedente">❮</button>
         
         <div class="audio-grid" id="audio-carousel-track">
+          
           <div class="audio-card reveal-item">
             <h3>🎻 Hallelujah</h3>
             <p class="audio-desc">Demo • Live Violin</p>
-            <audio controls preload="none" class="custom-audio">
-              <source src="audio/demo1.m4a" type="audio/mp4">
-            </audio>
+            <div class="custom-player">
+              <audio preload="none" src="audio/demo1.m4a"></audio>
+              <button class="player-play-btn" aria-label="Play/Pause">
+                <svg class="play-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
+                <svg class="pause-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+              </button>
+              <div class="player-progress-container">
+                <span class="player-current-time">0:00</span>
+                <input type="range" class="player-seekbar" value="0" min="0" max="100" step="0.1">
+                <span class="player-duration">0:00</span>
+              </div>
+            </div>
           </div>
 
           <div class="audio-card reveal-item">
             <h3>🎻 Chi Mai</h3>
             <p class="audio-desc">Demo • Live Violin</p>
-            <audio controls preload="none" class="custom-audio">
-              <source src="audio/demo2.m4a" type="audio/mp4">
-            </audio>
+            <div class="custom-player">
+              <audio preload="none" src="audio/demo2.m4a"></audio>
+              <button class="player-play-btn" aria-label="Play/Pause">
+                <svg class="play-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
+                <svg class="pause-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+              </button>
+              <div class="player-progress-container">
+                <span class="player-current-time">0:00</span>
+                <input type="range" class="player-seekbar" value="0" min="0" max="100" step="0.1">
+                <span class="player-duration">0:00</span>
+              </div>
+            </div>
           </div>
 
           <div class="audio-card reveal-item">
             <h3>🎻 Can't Help Falling in Love</h3>
             <p class="audio-desc">Demo • Live Violin</p>
-            <audio controls preload="none" class="custom-audio">
-              <source src="audio/demo3.m4a" type="audio/mp4">
-            </audio>
+            <div class="custom-player">
+              <audio preload="none" src="audio/demo3.m4a"></audio>
+              <button class="player-play-btn" aria-label="Play/Pause">
+                <svg class="play-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
+                <svg class="pause-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+              </button>
+              <div class="player-progress-container">
+                <span class="player-current-time">0:00</span>
+                <input type="range" class="player-seekbar" value="0" min="0" max="100" step="0.1">
+                <span class="player-duration">0:00</span>
+              </div>
+            </div>
           </div>
 
           <div class="audio-card reveal-item">
             <h3>🎻 Die With a Smile</h3>
             <p class="audio-desc">Demo • Live Violin</p>
-            <audio controls preload="none" class="custom-audio">
-              <source src="audio/demo4.m4a" type="audio/mp4">
-            </audio>
+            <div class="custom-player">
+              <audio preload="none" src="audio/demo4.m4a"></audio>
+              <button class="player-play-btn" aria-label="Play/Pause">
+                <svg class="play-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
+                <svg class="pause-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+              </button>
+              <div class="player-progress-container">
+                <span class="player-current-time">0:00</span>
+                <input type="range" class="player-seekbar" value="0" min="0" max="100" step="0.1">
+                <span class="player-duration">0:00</span>
+              </div>
+            </div>
           </div>
 
           <div class="audio-card reveal-item">
             <h3>🎻 You Rise Me Up</h3>
             <p class="audio-desc">Demo • Live Violin</p>
-            <audio controls preload="none" class="custom-audio">
-              <source src="audio/demo5.m4a" type="audio/mp4">
-            </audio>
+            <div class="custom-player">
+              <audio preload="none" src="audio/demo5.m4a"></audio>
+              <button class="player-play-btn" aria-label="Play/Pause">
+                <svg class="play-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"></polygon></svg>
+                <svg class="pause-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+              </button>
+              <div class="player-progress-container">
+                <span class="player-current-time">0:00</span>
+                <input type="range" class="player-seekbar" value="0" min="0" max="100" step="0.1">
+                <span class="player-duration">0:00</span>
+              </div>
+            </div>
           </div>
+
         </div>
 
         <button class="carousel-arrow next" id="audio-next" title="Successivo">❯</button>
@@ -634,7 +758,6 @@
         });
 
         bindVideoModalEvents();
-        setupMediaInterruption();
       } catch (err) {
         console.error("Errore recupero video dinamici:", err);
       }
@@ -644,25 +767,87 @@
   </script>
 
   <script>
-    // Funzione per fermare automaticamente gli altri media quando ne parte uno (supporto PC e Mobile)
-    function setupMediaInterruption() {
-      const allMedia = document.querySelectorAll('audio, video');
-      allMedia.forEach(media => {
-        media.removeEventListener('play', handlePlayEvent);
-        media.addEventListener('play', handlePlayEvent);
-      });
-    }
+    // LOGICA CUSTOM AUDIO PLAYERS (Gestione impeccabile su PC, Android e iPhone)
+    function initCustomAudioPlayers() {
+      const players = document.querySelectorAll('.custom-player');
 
-    function handlePlayEvent(e) {
-      const currentMedia = e.target;
-      document.querySelectorAll('audio, video').forEach(media => {
-        if (media !== currentMedia) {
-          media.pause();
+      players.forEach(player => {
+        const audio = player.querySelector('audio');
+        const playBtn = player.querySelector('.player-play-btn');
+        const playIcon = player.querySelector('.play-icon');
+        const pauseIcon = player.querySelector('.pause-icon');
+        const seekbar = player.querySelector('.player-seekbar');
+        const currentTimeEl = player.querySelector('.player-current-time');
+        const durationEl = player.querySelector('.player-duration');
+
+        function formatTime(seconds) {
+          if (isNaN(seconds)) return "0:00";
+          const mins = Math.floor(seconds / 60);
+          const secs = Math.floor(seconds % 60);
+          return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
+
+        // Quando carica i metadati mostra la durata totale
+        audio.addEventListener('loadedmetadata', () => {
+          durationEl.textContent = formatTime(audio.duration);
+        });
+
+        // Pulsante Play / Pausa e arresto globale di tutti gli altri media (audio e video)
+        playBtn.addEventListener('click', () => {
+          // Ferma tutti gli altri audio e video nella pagina
+          document.querySelectorAll('audio, video').forEach(media => {
+            if (media !== audio) {
+              media.pause();
+            }
+          });
+
+          // Resetta le icone degli altri custom player
+          players.forEach(p => {
+            if (p !== player) {
+              p.querySelector('.play-icon').style.display = 'block';
+              p.querySelector('.pause-icon').style.display = 'none';
+            }
+          });
+
+          if (audio.paused) {
+            audio.play();
+            playIcon.style.display = 'none';
+            pauseIcon.style.display = 'block';
+          } else {
+            audio.pause();
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+          }
+        });
+
+        // Aggiorna barra e tempo durante la riproduzione
+        audio.addEventListener('timeupdate', () => {
+          if (!isNaN(audio.duration)) {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            seekbar.value = progress;
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+          }
+        });
+
+        // Permette di trascinare/cliccare sulla barra per saltare nel brano
+        seekbar.addEventListener('input', () => {
+          if (!isNaN(audio.duration)) {
+            const time = (seekbar.value / 100) * audio.duration;
+            audio.currentTime = time;
+          }
+        });
+
+        // Quando il brano finisce resetta il tasto
+        audio.addEventListener('ended', () => {
+          playIcon.style.display = 'block';
+          pauseIcon.style.display = 'none';
+          seekbar.value = 0;
+          currentTimeEl.textContent = '0:00';
+        });
       });
     }
 
-    document.addEventListener('DOMContentLoaded', setupMediaInterruption);
+    document.addEventListener('DOMContentLoaded', initCustomAudioPlayers);
 
     // Intersection Observer per animazioni reveal
     const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
@@ -740,10 +925,10 @@
 
     if (audioPrev && audioNext && audioTrack) {
       audioPrev.addEventListener('click', () => {
-        audioTrack.scrollBy({ left: -330, behavior: 'smooth' });
+        audioTrack.scrollBy({ left: -300, behavior: 'smooth' });
       });
       audioNext.addEventListener('click', () => {
-        audioTrack.scrollBy({ left: 330, behavior: 'smooth' });
+        audioTrack.scrollBy({ left: 300, behavior: 'smooth' });
       });
     }
 
@@ -771,6 +956,11 @@
       videoWrappers.forEach(wrapper => {
         wrapper.onclick = () => {
           document.querySelectorAll('video, audio').forEach(m => m.pause());
+          // Resetta anche i custom player
+          document.querySelectorAll('.custom-player').forEach(p => {
+            p.querySelector('.play-icon').style.display = 'block';
+            p.querySelector('.pause-icon').style.display = 'none';
+          });
           const videoSrc = wrapper.getAttribute('data-src');
           if (videoSrc && modalVideo && videoModal) {
             modalVideo.src = videoSrc;

@@ -43,9 +43,10 @@
       padding: 20px 18px !important;
     }
 
+    /* FORZA IL PLAYER AUDIO A RESTARE SEMPRE ESTESO SU QUALSIASI DISPOSITIVO */
     .custom-audio {
       width: 100% !important;
-      max-width: 100% !important;
+      min-width: 280px !important;
       display: block !important;
     }
 
@@ -220,12 +221,12 @@
         flex: 0 0 150px !important;
         width: 150px !important;
       }
-      /* Card audio mobile dimensionata correttamente per non tagliare il player nativo */
+      /* Card audio mobile allargata per mantenere sempre aperto il player */
       .audio-grid .audio-card {
-        flex: 0 0 310px !important;
-        width: 310px !important;
-        min-width: 310px !important;
-        padding: 15px 8px !important;
+        flex: 0 0 330px !important;
+        width: 330px !important;
+        min-width: 330px !important;
+        padding: 16px 12px !important;
       }
       #modalVideo {
         max-height: 75vh;
@@ -739,10 +740,10 @@
 
     if (audioPrev && audioNext && audioTrack) {
       audioPrev.addEventListener('click', () => {
-        audioTrack.scrollBy({ left: -310, behavior: 'smooth' });
+        audioTrack.scrollBy({ left: -330, behavior: 'smooth' });
       });
       audioNext.addEventListener('click', () => {
-        audioTrack.scrollBy({ left: 310, behavior: 'smooth' });
+        audioTrack.scrollBy({ left: 330, behavior: 'smooth' });
       });
     }
 

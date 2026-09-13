@@ -33,7 +33,7 @@
       display: none;
     }
 
-    /* DIMENSIONE LARGA E SICURA PER LE CARD AUDIO (Evita lo schiacciamento del player) */
+    /* DIMENSIONE CARD AUDIO DESKTOP */
     .audio-grid .audio-card {
       flex: 0 0 320px !important;
       width: 320px !important;
@@ -211,7 +211,7 @@
 
     @media (max-width: 768px) {
       .reels-carousel-wrapper {
-        padding: 0 15px;
+        padding: 0 10px;
       }
       .carousel-arrow {
         display: none; /* Swipe touch su mobile */
@@ -219,6 +219,13 @@
       .video-wrapper.reel-card {
         flex: 0 0 150px !important;
         width: 150px !important;
+      }
+      /* Card audio mobile dimensionata correttamente per non tagliare il player nativo */
+      .audio-grid .audio-card {
+        flex: 0 0 310px !important;
+        width: 310px !important;
+        min-width: 310px !important;
+        padding: 15px 8px !important;
       }
       #modalVideo {
         max-height: 75vh;
@@ -626,7 +633,7 @@
         });
 
         bindVideoModalEvents();
-        setupMediaInterruption(); // Aggiorna anche i video dinamici
+        setupMediaInterruption();
       } catch (err) {
         console.error("Errore recupero video dinamici:", err);
       }
@@ -636,7 +643,7 @@
   </script>
 
   <script>
-    // Funzione robusta ed universale per fermare gli altri media su PC e Mobile (iOS/Android)
+    // Funzione per fermare automaticamente gli altri media quando ne parte uno (supporto PC e Mobile)
     function setupMediaInterruption() {
       const allMedia = document.querySelectorAll('audio, video');
       allMedia.forEach(media => {
@@ -654,7 +661,6 @@
       });
     }
 
-    // Esegui al caricamento della pagina
     document.addEventListener('DOMContentLoaded', setupMediaInterruption);
 
     // Intersection Observer per animazioni reveal
@@ -733,10 +739,10 @@
 
     if (audioPrev && audioNext && audioTrack) {
       audioPrev.addEventListener('click', () => {
-        audioTrack.scrollBy({ left: -320, behavior: 'smooth' });
+        audioTrack.scrollBy({ left: -310, behavior: 'smooth' });
       });
       audioNext.addEventListener('click', () => {
-        audioTrack.scrollBy({ left: 320, behavior: 'smooth' });
+        audioTrack.scrollBy({ left: 310, behavior: 'smooth' });
       });
     }
 

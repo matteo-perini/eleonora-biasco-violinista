@@ -626,6 +626,7 @@
         });
 
         bindVideoModalEvents();
+        setupMediaInterruption(); // Aggiorna anche i video dinamici
       } catch (err) {
         console.error("Errore recupero video dinamici:", err);
       }
@@ -635,16 +636,26 @@
   </script>
 
   <script>
-    // Pausa automatica globale per tutti i player audio e video (quando uno parte, gli altri si fermano)
-    document.addEventListener('play', (e) => {
-      if (e.target.tagName === 'AUDIO' || e.target.tagName === 'VIDEO') {
-        document.querySelectorAll('audio, video').forEach(media => {
-          if (media !== e.target) {
-            media.pause();
-          }
-        });
-      }
-    }, true);
+    // Funzione robusta ed universale per fermare gli altri media su PC e Mobile (iOS/Android)
+    function setupMediaInterruption() {
+      const allMedia = document.querySelectorAll('audio, video');
+      allMedia.forEach(media => {
+        media.removeEventListener('play', handlePlayEvent);
+        media.addEventListener('play', handlePlayEvent);
+      });
+    }
+
+    function handlePlayEvent(e) {
+      const currentMedia = e.target;
+      document.querySelectorAll('audio, video').forEach(media => {
+        if (media !== currentMedia) {
+          media.pause();
+        }
+      });
+    }
+
+    // Esegui al caricamento della pagina
+    document.addEventListener('DOMContentLoaded', setupMediaInterruption);
 
     // Intersection Observer per animazioni reveal
     const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
@@ -752,7 +763,7 @@
       const videoWrappers = document.querySelectorAll('.video-wrapper');
       videoWrappers.forEach(wrapper => {
         wrapper.onclick = () => {
-          document.querySelectorAll('video').forEach(vid => vid.pause());
+          document.querySelectorAll('video, audio').forEach(m => m.pause());
           const videoSrc = wrapper.getAttribute('data-src');
           if (videoSrc && modalVideo && videoModal) {
             modalVideo.src = videoSrc;

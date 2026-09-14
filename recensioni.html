@@ -232,7 +232,7 @@
                     <textarea id="messaggio" name="messaggio" rows="4" required placeholder="Racconta brevemente come ti sei trovato..."></textarea>
                 </div>
 
-                <button type="submit" class="btn-invia">Invia recensione</button>
+                <button type="submit" class="btn-invia" id="btnInviaRecensione">Invia recensione</button>
             </form>
         </section>
 
@@ -255,34 +255,44 @@
         </div>
     </div>
 
-    <script>
+    <!-- Script Firebase e Logica recensioni -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDpFJSJppEf3YUek4vgbbG9kzyYr0xYj4s",
+          authDomain: "violinista-eleonora.firebaseapp.com",
+          projectId: "violinista-eleonora",
+          storageBucket: "violinista-eleonora.firebasestorage.app",
+          messagingSenderId: "5833623770",
+          appId: "1:5833623770:web:99467a55c0e30abd747de3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqTPhG3_Zh9LP5reIK44uJzNso_5S_YFrKEc6AIKn4XDzNOL24M_gRD0AsLbmp_vrX/exec";
 
-        function chiudiPopup() {
+        window.chiudiPopup = function() {
             document.getElementById("customPopup").classList.remove("active");
         }
 
-        // Funzione per ripulire e formattare la data (da formato ISO a DD/MM/YYYY)
-        function formattaData(dataString) {
-            if (!dataString) return "";
+        function formattaData(timestamp) {
+            if (!timestamp) return "";
             try {
-                if (dataString.includes("T")) {
-                    const soloData = dataString.split("T")[0];
-                    const parti = soloData.split("-");
-                    if (parti.length === 3) {
-                        return `${parti[2]}/${parti[1]}/${parti[0]}`;
-                    }
+                if (timestamp.toDate) {
+                    return timestamp.toDate().toLocaleDateString("it-IT");
                 }
-                const d = new Date(dataString);
+                const d = new Date(timestamp);
                 if (!isNaN(d.getTime())) {
                     return d.toLocaleDateString("it-IT");
                 }
             } catch (e) {}
-            return dataString;
+            return timestamp;
         }
 
-        function creaCardHTML(nome, voto, messaggio, data) {
-            const numStelle = parseInt(voto) || 5;
+        function creaCardHTML(nome, stelle, testo, data) {
+            const numStelle = parseInt(stelle) || 5;
             const stelleStr = "⭐".repeat(numStelle);
             const dataPulita = formattaData(data);
             return `
@@ -290,7 +300,7 @@
                     <span>${nome}</span>
                     <span>${stelleStr}</span>
                 </div>
-                <p class="testo-recensione">"${messaggio}"</p>
+                <p class="testo-recensione">"${testo}"</p>
                 <span class="data-recensione">${dataPulita}</span>
             `;
         }
@@ -300,64 +310,98 @@
             const boxRiepilogo = document.getElementById("boxRiepilogo");
 
             try {
-                const response = await fetch(SCRIPT_URL);
-                const data = await response.json();
+                const colRef = collection(db, "recensioni");
+                const q = query(colRef, orderBy("dataCaricamento", "desc"));
+                let querySnapshot = await getDocs(q);
 
-                if (!data || data.length === 0) {
+                // Se Firebase è vuoto, importa automaticamente le vecchie recensioni da Google Sheets!
+                if (querySnapshot.empty) {
+                    console.log("Database Firebase vuoto: importazione automatica da Google Sheets...");
+                    try {
+                        const res = await fetch(SCRIPT_URL);
+                        const vecchie = await res.json();
+                        if (vecchie && Array.isArray(vecchie) && vecchie.length > 0) {
+                            for (const rec of vecchie) {
+                                await addDoc(colRef, {
+                                    nome: rec.nome || "Utente",
+                                    testo: rec.messaggio || rec.testo || "",
+                                    stelle: parseInt(rec.voto || 5),
+                                    dataCaricamento: serverTimestamp()
+                                });
+                            }
+                            // Ricarica la query dopo l'importazione
+                            querySnapshot = await getDocs(q);
+                        }
+                    } catch (migrationErr) {
+                        console.error("Errore durante l'importazione automatica:", migrationErr);
+                    }
+                }
+
+                if (querySnapshot.empty) {
                     contenitore.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Ancora nessuna recensione.</p>`;
                     boxRiepilogo.style.display = "none";
                     return;
                 }
 
-                // Calcolo Media e Totale Recensioni
                 let sommaVoti = 0;
-                data.forEach(rec => {
-                    sommaVoti += (parseInt(rec.voto) || 5);
-                });
-                const media = (sommaVoti / data.length).toFixed(1);
-                const totale = data.length;
+                let totale = 0;
+                let cardsHTML = "";
 
-                // Aggiorna i valori nel box di riepilogo in alto
+                querySnapshot.forEach((docSnap) => {
+                    const rec = docSnap.data();
+                    const votoNum = parseInt(rec.stelle) || 5;
+                    sommaVoti += votoNum;
+                    totale++;
+
+                    const cardDiv = document.createElement("div");
+                    cardDiv.className = "card-recensione";
+                    cardDiv.innerHTML = creaCardHTML(rec.nome, rec.stelle, rec.testo, rec.dataCaricamento);
+                    cardsHTML += cardDiv.outerHTML;
+                });
+
+                const media = (sommaVoti / totale).toFixed(1);
+
                 document.getElementById("mediaStelleNum").textContent = media;
                 document.getElementById("totaleRecensioniNum").textContent = totale;
                 boxRiepilogo.style.display = "flex";
 
-                contenitore.innerHTML = "";
-                data.reverse().forEach(rec => {
-                    const card = document.createElement("div");
-                    card.className = "card-recensione";
-                    card.innerHTML = creaCardHTML(rec.nome, rec.voto, rec.messaggio, rec.data);
-                    contenitore.appendChild(card);
-                });
+                contenitore.innerHTML = cardsHTML;
             } catch (err) {
+                console.error("Errore caricamento:", err);
                 contenitore.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Impossibile caricare le recensioni.</p>`;
             }
         }
 
-        document.getElementById("form-recensioni").addEventListener("submit", function(e) {
+        document.getElementById("form-recensioni").addEventListener("submit", async function(e) {
             e.preventDefault();
-            const nomeVal = document.getElementById("nome").value;
-            const votoVal = document.getElementById("voto").value;
-            const messaggioVal = document.getElementById("messaggio").value;
-            const dataOggi = new Date().toLocaleDateString("it-IT");
+            const nomeVal = document.getElementById("nome").value.trim();
+            const votoVal = parseInt(document.getElementById("voto").value);
+            const messaggioVal = document.getElementById("messaggio").value.trim();
+            const btnInvia = document.getElementById("btnInviaRecensione");
 
-            const contenitore = document.getElementById("contenitore-recensioni");
-            const nuovaCard = document.createElement("div");
-            nuovaCard.className = "card-recensione";
-            nuovaCard.innerHTML = creaCardHTML(nomeVal, votoVal, messaggioVal, dataOggi);
-            contenitore.insertBefore(nuovaCard, contenitore.firstChild);
+            if (!nomeVal || !messaggioVal) return;
 
-            this.reset();
-            
-            // Mostra popup di successo
-            document.getElementById("customPopup").classList.add("active");
+            btnInvia.disabled = true;
+            btnInvia.textContent = "Invio in corso...";
 
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ nome: nomeVal, voto: votoVal, messaggio: messaggioVal })
-            }).catch(err => console.error(err));
+            try {
+                await addDoc(collection(db, "recensioni"), {
+                    nome: nomeVal,
+                    testo: messaggioVal,
+                    stelle: votoVal,
+                    dataCaricamento: serverTimestamp()
+                });
+
+                this.reset();
+                document.getElementById("customPopup").classList.add("active");
+                await caricaRecensioni();
+            } catch (err) {
+                console.error("Errore salvataggio:", err);
+                alert("Errore durante l'invio della recensione.");
+            } finally {
+                btnInvia.disabled = false;
+                btnInvia.textContent = "Invia recensione";
+            }
         });
 
         caricaRecensioni();

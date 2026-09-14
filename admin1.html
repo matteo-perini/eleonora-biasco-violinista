@@ -399,6 +399,7 @@
 
   <div class="admin-wrapper">
 
+    <!-- SCHEDA DI LOGIN -->
     <div class="admin-box" id="login-card">
       <div style="text-align: center; margin-bottom: 15px;">
         <h2 style="color: var(--primary-color, #d4af37); margin-bottom: 3px;">Accesso Riservato</h2>
@@ -408,17 +409,18 @@
       <form id="login-form" class="admin-form">
         <div class="gruppo-input">
           <label for="login-email">Email</label>
-          <input type="text" id="login-email" placeholder="Inserisci email" required>
+          <input type="email" id="login-email" placeholder="Inserisci email" required>
         </div>
         <div class="gruppo-input">
           <label for="login-password">Password</label>
           <input type="password" id="login-password" placeholder="Inserisci password" required>
         </div>
-        <div id="login-error">Credenziali errate. Riprova.</div>
+        <div id="login-error">Credenziali errate o non autorizzate.</div>
         <button type="submit" class="btn-invia">Accedi</button>
       </form>
     </div>
 
+    <!-- PANNELLO ADMIN (PROTETTO) -->
     <div id="admin-panel" style="display: none; width: 100%; max-width: 550px;">
       
       <div class="admin-box" style="margin-bottom: 10px; padding: 10px 20px;">
@@ -428,6 +430,24 @@
         </div>
       </div>
 
+      <!-- SEZIONE CAMBIO PASSWORD CLIENTE -->
+      <div class="admin-box">
+        <h3 class="admin-section-title">🔒 Sicurezza Account</h3>
+        <form id="change-password-form" class="admin-form">
+          <div class="gruppo-input">
+            <label for="new-password">Nuova Password</label>
+            <input type="password" id="new-password" placeholder="Inserisci nuova password" required minlength="6">
+          </div>
+          <div class="gruppo-input">
+            <label for="confirm-password">Conferma Nuova Password</label>
+            <input type="password" id="confirm-password" placeholder="Ripeti nuova password" required minlength="6">
+          </div>
+          <div id="password-status" class="status-msg"></div>
+          <button type="submit" class="btn-invia">Aggiorna Password</button>
+        </form>
+      </div>
+
+      <!-- GESTIONE BRANI -->
       <div class="admin-box">
         <h3 class="admin-section-title">🎵 Gestione Brani Audio</h3>
 
@@ -477,6 +497,7 @@
         </div>
       </div>
 
+      <!-- GESTIONE VIDEO -->
       <div class="admin-box">
         <h3 class="admin-section-title">🎬 Gestione Video / Reels</h3>
 
@@ -505,6 +526,7 @@
 
   </div>
 
+  <!-- MODALI -->
   <div class="edit-modal" id="editModal">
     <div class="admin-box" style="max-width: 350px; margin: 0; padding: 20px;">
       <h3 style="color: var(--primary-color, #d4af37); margin-top: 0; font-family: var(--font-heading, 'Cinzel', serif); font-size: 1rem; margin-bottom: 10px;">Modifica Brano</h3>
@@ -541,10 +563,12 @@
     </div>
   </div>
 
+  <!-- SCRIPT FIREBASE AUTH & STORAGE/FIRESTORE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDpFJSJppEf3YUek4vgbbG9kzyYr0xYj4s",
@@ -558,6 +582,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const storage = getStorage(app);
+    const auth = getAuth(app);
 
     let braniFirebase = [];
     let videoFirebase = [];
@@ -567,28 +592,76 @@
     const loginForm = document.getElementById('login-form');
     const loginError = document.getElementById('login-error');
 
+    // Controllo stato autenticazione in tempo reale (gestione token e sessione)
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        loginCard.style.display = "none";
+        adminPanel.style.display = "block";
+        await Promise.all([caricaBraniFirebase(), caricaVideoFirebase()]);
+      } else {
+        adminPanel.style.display = "none";
+        loginCard.style.display = "block";
+      }
+    });
+
+    // Login con Firebase Auth (funziona sia per te che per la cliente con email e password temporanea)
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value.trim();
+      loginError.style.display = "none";
 
-      if (email === "1" && password === "1") {
-        loginCard.style.display = "none";
-        adminPanel.style.display = "block";
-        loginError.style.display = "none";
-        await Promise.all([caricaBraniFirebase(), caricaVideoFirebase()]);
-      } else {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        console.error(err);
         loginError.style.display = "block";
       }
     });
 
-    window.logout = function() {
-      adminPanel.style.display = "none";
-      loginCard.style.display = "block";
-      document.getElementById('login-email').value = "";
-      document.getElementById('login-password').value = "";
+    // Logout sicuro
+    window.logout = async function() {
+      try {
+        await signOut(auth);
+        document.getElementById('login-email').value = "";
+        document.getElementById('login-password').value = "";
+      } catch (err) {
+        console.error(err);
+      }
     };
 
+    // Gestione cambio password autonomo al primo accesso (o successivo)
+    const changePasswordForm = document.getElementById('change-password-form');
+    changePasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newPass = document.getElementById('new-password').value.trim();
+      const confirmPass = document.getElementById('confirm-password').value.trim();
+      const statusMsg = document.getElementById('password-status');
+
+      statusMsg.style.display = "block";
+
+      if (newPass !== confirmPass) {
+        statusMsg.style.color = "#ff4d4d";
+        statusMsg.textContent = "Le password non coincidono.";
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          await updatePassword(user, newPass);
+          statusMsg.style.color = "#2ecc71";
+          statusMsg.textContent = "✅ Password aggiornata con successo!";
+          changePasswordForm.reset();
+          window.mostraAlert("Sicurezza", "Password modificata con successo!", "🔒");
+        } catch (err) {
+          statusMsg.style.color = "#ff4d4d";
+          statusMsg.textContent = "Errore: effettua nuovamente il login.";
+        }
+      }
+    });
+
+    // --- FUNZIONI DI SUPPORTO E POPUP ---
     window.mostraConferma = function(titolo, testo, icona, callbackYes) {
       const overlay = document.getElementById('customPopup');
       document.getElementById('popupTitle').textContent = titolo;

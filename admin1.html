@@ -144,7 +144,7 @@
       box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
     }
 
-    /* BOTTONE A TENDINA "BRANI" */
+    /* BOTTONE A TENDINA */
     .dropdown-toggle-btn {
       background: rgba(212, 175, 55, 0.1);
       border: 1px solid rgba(212, 175, 55, 0.4);
@@ -166,7 +166,6 @@
       background: rgba(212, 175, 55, 0.2);
     }
 
-    /* CONTENITORE A TENDINA (ACCORDION) */
     .dropdown-content-box {
       display: none;
       border-top: 1px solid rgba(212, 175, 55, 0.2);
@@ -522,6 +521,31 @@
         </div>
       </div>
 
+      <!-- GESTIONE FOTO (PER CAROSELLO INDEX) -->
+      <div class="admin-box">
+        <h3 class="admin-section-title">🖼️ Gestione Foto Carosello (Index)</h3>
+
+        <form id="upload-form-photo" class="admin-form">
+          <div class="gruppo-input">
+            <label for="photo-file">File Foto (JPG, JPEG, PNG, HEIC)</label>
+            <input type="file" id="photo-file" accept="image/*, .heic, .heif" required>
+          </div>
+          <div id="photo-status" class="status-msg"></div>
+          <button type="submit" class="btn-invia" id="btn-submit-photo">🖼️ Pubblica Foto</button>
+        </form>
+
+        <div class="track-list-section">
+          <button type="button" class="dropdown-toggle-btn" onclick="window.togglePhotoDropdown()">
+            <span>📂 Foto Inserite (<span id="photo-count">0</span>)</span>
+            <span id="photo-arrow">▼</span>
+          </button>
+
+          <div class="dropdown-content-box" id="photo-dropdown-box">
+            <ul class="track-list" id="photo-list"></ul>
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -586,25 +610,26 @@
 
     let braniFirebase = [];
     let videoFirebase = [];
+    let fotoFirebase = [];
 
     const loginCard = document.getElementById('login-card');
     const adminPanel = document.getElementById('admin-panel');
     const loginForm = document.getElementById('login-form');
     const loginError = document.getElementById('login-error');
 
-    // Controllo stato autenticazione in tempo reale (gestione token e sessione)
+    // Controllo stato autenticazione in tempo reale
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         loginCard.style.display = "none";
         adminPanel.style.display = "block";
-        await Promise.all([caricaBraniFirebase(), caricaVideoFirebase()]);
+        await Promise.all([caricaBraniFirebase(), caricaVideoFirebase(), caricaFotoFirebase()]);
       } else {
         adminPanel.style.display = "none";
         loginCard.style.display = "block";
       }
     });
 
-    // Login con Firebase Auth (funziona sia per te che per la cliente con email e password temporanea)
+    // Login con Firebase Auth
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value.trim();
@@ -630,7 +655,7 @@
       }
     };
 
-    // Gestione cambio password autonomo al primo accesso (o successivo)
+    // Gestione cambio password autonomo
     const changePasswordForm = document.getElementById('change-password-form');
     changePasswordForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -715,6 +740,14 @@
       arrow.textContent = box.classList.contains('active') ? "▲" : "▼";
     };
 
+    window.togglePhotoDropdown = function() {
+      const box = document.getElementById('photo-dropdown-box');
+      const arrow = document.getElementById('photo-arrow');
+      box.classList.toggle('active');
+      arrow.textContent = box.classList.contains('active') ? "▲" : "▼";
+    };
+
+    // --- GESTIONE BRANI ---
     async function caricaBraniFirebase() {
       try {
         const q = query(collection(db, "repertorio"), orderBy("dataCaricamento", "desc"));
@@ -858,6 +891,7 @@
       );
     };
 
+    // --- GESTIONE VIDEO ---
     async function caricaVideoFirebase() {
       try {
         const q = query(collection(db, "video_reels"), orderBy("dataCaricamento", "desc"));
@@ -946,6 +980,100 @@
             if (storagePath) await deleteObject(ref(storage, storagePath)).catch(e => {});
             await caricaVideoFirebase();
             window.mostraAlert("Rimosso", "Video eliminato.", "✅");
+          } catch (err) { window.mostraAlert("Errore", "Impossibile eliminare.", "❌"); }
+        }
+      );
+    };
+
+    // --- GESTIONE FOTO (CAROSELLO INDEX) ---
+    async function caricaFotoFirebase() {
+      try {
+        const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
+        const querySnapshot = await getDocs(q);
+        fotoFirebase = [];
+        querySnapshot.forEach((docSnap) => {
+          fotoFirebase.push({ docId: docSnap.id, ...docSnap.data() });
+        });
+        renderPhotoList(fotoFirebase);
+      } catch (err) { console.error(err); }
+    }
+
+    function renderPhotoList(items) {
+      const photoList = document.getElementById('photo-list');
+      const photoCount = document.getElementById('photo-count');
+      photoList.innerHTML = "";
+      photoCount.textContent = items.length;
+
+      if (items.length === 0) {
+        photoList.innerHTML = `<li style="color: var(--text-muted); text-align: center; font-size: 0.72rem; padding: 6px;">Nessuna foto.</li>`;
+        return;
+      }
+
+      items.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'track-item';
+        li.innerHTML = `
+          <div class="track-item-info">
+            <span class="track-item-title">🖼️ Foto ${items.length - index}</span>
+          </div>
+          <button class="btn-action btn-delete" onclick="window.confermaEliminaFoto('${item.docId}', '${item.storagePath || ''}')">Del</button>
+        `;
+        photoList.appendChild(li);
+      });
+    }
+
+    document.getElementById('upload-form-photo').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const file = document.getElementById('photo-file').files[0];
+      const status = document.getElementById('photo-status');
+      const btn = document.getElementById('btn-submit-photo');
+
+      if (!file) return;
+
+      btn.disabled = true;
+      status.style.display = "block";
+      status.style.color = "var(--primary-color)";
+      status.textContent = "Caricamento...";
+
+      const fileRef = ref(storage, `galleria_foto/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(fileRef, file);
+
+      uploadTask.on('state_changed', 
+        (snap) => {
+          const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+          status.textContent = `Caricamento: ${p}%`;
+        }, 
+        (err) => { status.style.color = "#ff4d4d"; status.textContent = "Errore."; btn.disabled = false; }, 
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          try {
+            await addDoc(collection(db, "galleria_foto"), {
+              fotoUrl: downloadURL,
+              storagePath: uploadTask.snapshot.ref.fullPath,
+              dataCaricamento: serverTimestamp()
+            });
+            status.style.color = "#2ecc71";
+            status.textContent = "✅ Fatto!";
+            document.getElementById('upload-form-photo').reset();
+            await caricaFotoFirebase();
+            window.mostraAlert("Successo", "Foto pubblicata per il carosello!", "🖼️");
+          } catch (err) { status.style.color = "#ff4d4d"; status.textContent = "Errore DB."; }
+          finally { btn.disabled = false; setTimeout(() => { status.style.display = "none"; }, 2500); }
+        }
+      );
+    });
+
+    window.confermaEliminaFoto = function(docId, storagePath) {
+      window.mostraConferma(
+        "Elimina",
+        "Vuoi eliminare questa foto?",
+        "🗑️",
+        async () => {
+          try {
+            await deleteDoc(doc(db, "galleria_foto", docId));
+            if (storagePath) await deleteObject(ref(storage, storagePath)).catch(e => {});
+            await caricaFotoFirebase();
+            window.mostraAlert("Rimosso", "Foto eliminata.", "✅");
           } catch (err) { window.mostraAlert("Errore", "Impossibile eliminare.", "❌"); }
         }
       );

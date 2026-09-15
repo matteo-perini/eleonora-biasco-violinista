@@ -496,7 +496,7 @@
         </div>
       </div>
 
-      <!-- GESTIONE VIDEO -->
+      <!-- GESTIONE VIDEO (CON AUTOCOMPRESSIONE > 20 MB) -->
       <div class="admin-box">
         <h3 class="admin-section-title">🎬 Gestione Video / Reels</h3>
 
@@ -521,7 +521,7 @@
         </div>
       </div>
 
-      <!-- GESTIONE FOTO (PER CAROSELLO INDEX) -->
+      <!-- GESTIONE FOTO (CON AUTOCOMPRESSIONE > 2 MB E QUALITÀ AL 80%) -->
       <div class="admin-box">
         <h3 class="admin-section-title">🖼️ Gestione Foto Carosello (Index)</h3>
 
@@ -617,7 +617,6 @@
     const loginForm = document.getElementById('login-form');
     const loginError = document.getElementById('login-error');
 
-    // Controllo stato autenticazione in tempo reale
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         loginCard.style.display = "none";
@@ -629,7 +628,6 @@
       }
     });
 
-    // Login con Firebase Auth
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value.trim();
@@ -644,7 +642,6 @@
       }
     });
 
-    // Logout sicuro
     window.logout = async function() {
       try {
         await signOut(auth);
@@ -655,7 +652,6 @@
       }
     };
 
-    // Gestione cambio password autonomo
     const changePasswordForm = document.getElementById('change-password-form');
     changePasswordForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -686,7 +682,6 @@
       }
     });
 
-    // --- FUNZIONI DI SUPPORTO E POPUP ---
     window.mostraConferma = function(titolo, testo, icona, callbackYes) {
       const overlay = document.getElementById('customPopup');
       document.getElementById('popupTitle').textContent = titolo;
@@ -891,7 +886,7 @@
       );
     };
 
-    // --- GESTIONE VIDEO ---
+    // --- GESTIONE VIDEO (CON AUTOCOMPRESSIONE > 20 MB) ---
     async function caricaVideoFirebase() {
       try {
         const q = query(collection(db, "video_reels"), orderBy("dataCaricamento", "desc"));
@@ -928,9 +923,84 @@
       });
     }
 
-    document.getElementById('upload-form-video').addEventListener('submit', (e) => {
+    async function comprimiVideoSeNecessario(file, statusElement) {
+      const LIMITE_MB = 20;
+      const fileMB = file.size / (1024 * 1024);
+
+      if (fileMB <= LIMITE_MB) return file;
+
+      statusElement.textContent = `⚡ Video grande (${fileMB.toFixed(1)}MB): compressione in corso...`;
+
+      return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.src = URL.createObjectURL(file);
+
+        video.onloadedmetadata = async () => {
+          window.URL.revokeObjectURL(video.src);
+          video.currentTime = 0;
+
+          const canvas = document.createElement('canvas');
+          let width = video.videoWidth;
+          let height = video.videoHeight;
+          const maxWidth = 1280;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+
+          const stream = canvas.captureStream(25);
+          let recorderOptions = { mimeType: 'video/webm;codecs=vp9' };
+          if (!MediaRecorder.isTypeSupported(recorderOptions.mimeType)) recorderOptions = { mimeType: 'video/webm' };
+          if (!MediaRecorder.isTypeSupported(recorderOptions.mimeType)) recorderOptions = {};
+
+          let mediaRecorder;
+          try {
+            mediaRecorder = new MediaRecorder(stream, recorderOptions);
+          } catch (e) {
+            resolve(file);
+            return;
+          }
+
+          const chunks = [];
+          mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/mp4' });
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".mp4", { type: 'video/mp4' });
+            statusElement.textContent = `✅ Compressione video OK! Nuovo peso: ${(compressedFile.size / (1024 * 1024)).toFixed(1)}MB`;
+            resolve(compressedFile);
+          };
+
+          mediaRecorder.start();
+          video.play();
+
+          function drawFrame() {
+            if (video.paused || video.ended) {
+              mediaRecorder.stop();
+              return;
+            }
+            ctx.drawImage(video, 0, 0, width, height);
+            requestAnimationFrame(drawFrame);
+          }
+          drawFrame();
+
+          video.onended = () => {
+            if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+          };
+        };
+
+        video.onerror = () => resolve(file);
+      });
+    }
+
+    document.getElementById('upload-form-video').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const file = document.getElementById('video-file').files[0];
+      let file = document.getElementById('video-file').files[0];
       const status = document.getElementById('video-status');
       const btn = document.getElementById('btn-submit-video');
 
@@ -939,7 +1009,10 @@
       btn.disabled = true;
       status.style.display = "block";
       status.style.color = "var(--primary-color)";
-      status.textContent = "Caricamento...";
+
+      file = await comprimiVideoSeNecessario(file, status);
+
+      status.textContent = "Caricamento su Firebase...";
 
       const fileRef = ref(storage, `video_reels/${Date.now()}_${file.name}`);
       const uploadTask = uploadBytesResumable(fileRef, file);
@@ -985,7 +1058,7 @@
       );
     };
 
-    // --- GESTIONE FOTO (CAROSELLO INDEX) ---
+    // --- GESTIONE FOTO (CON AUTOCOMPRESSIONE > 2 MB E QUALITÀ AL 80%) ---
     async function caricaFotoFirebase() {
       try {
         const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
@@ -1022,9 +1095,56 @@
       });
     }
 
-    document.getElementById('upload-form-photo').addEventListener('submit', (e) => {
+    async function comprimiFotoSeNecessario(file, statusElement) {
+      const LIMITE_MB = 2; // Soglia 2 MB per le foto
+      const fileMB = file.size / (1024 * 1024);
+
+      if (fileMB <= LIMITE_MB) return file;
+
+      statusElement.textContent = `⚡ Foto grande (${fileMB.toFixed(1)}MB): ottimizzazione in corso...`;
+
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxWidth = 1920; // Full HD web standard
+
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Conversione in JPEG con qualità impostata all'80% (0.8)
+            canvas.toBlob((blob) => {
+              if (!blob) {
+                resolve(file);
+                return;
+              }
+              const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
+              statusElement.textContent = `✅ Foto ottimizzata! Nuovo peso: ${(optimizedFile.size / (1024 * 1024)).toFixed(2)}MB`;
+              resolve(optimizedFile);
+            }, 'image/jpeg', 0.8);
+          };
+          img.onerror = () => resolve(file);
+        };
+        reader.onerror = () => resolve(file);
+      });
+    }
+
+    document.getElementById('upload-form-photo').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const file = document.getElementById('photo-file').files[0];
+      let file = document.getElementById('photo-file').files[0];
       const status = document.getElementById('photo-status');
       const btn = document.getElementById('btn-submit-photo');
 
@@ -1033,7 +1153,10 @@
       btn.disabled = true;
       status.style.display = "block";
       status.style.color = "var(--primary-color)";
-      status.textContent = "Caricamento...";
+
+      file = await comprimiFotoSeNecessario(file, status);
+
+      status.textContent = "Caricamento su Firebase...";
 
       const fileRef = ref(storage, `galleria_foto/${Date.now()}_${file.name}`);
       const uploadTask = uploadBytesResumable(fileRef, file);

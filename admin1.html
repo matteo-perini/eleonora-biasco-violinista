@@ -1058,7 +1058,7 @@
       );
     };
 
-    // --- GESTIONE FOTO (CON AUTOCOMPRESSIONE > 2 MB E QUALITÀ AL 80%) ---
+    // --- GESTIONE FOTO (CON AUTOCOMPRESSIONE > 2 MB, SUPPORTO UNIVERSALE E ANTI-BLOCCO) ---
     async function caricaFotoFirebase() {
       try {
         const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
@@ -1096,55 +1096,65 @@
     }
 
     async function comprimiFotoSeNecessario(file, statusElement) {
-      const LIMITE_MB = 2; // Soglia 2 MB per le foto
+      const LIMITE_MB = 2; // Soglia 2 MB
       const fileMB = file.size / (1024 * 1024);
 
-      if (fileMB <= LIMITE_MB) return file;
+      if (fileMB <= LIMITE_MB || !file.type.startsWith('image/')) return file;
 
       statusElement.textContent = `⚡ Foto grande (${fileMB.toFixed(1)}MB): ottimizzazione in corso...`;
 
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
+        
         reader.onload = (event) => {
           const img = new Image();
           img.src = event.target.result;
+          
           img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            const maxWidth = 1920; // Full HD web standard
+            try {
+              const canvas = document.createElement('canvas');
+              let width = img.width;
+              let height = img.height;
+              const maxWidth = 1920; // Full HD standard web
 
-            if (width > maxWidth) {
-              height = Math.round((height * maxWidth) / width);
-              width = maxWidth;
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            // Conversione in JPEG con qualità impostata all'80% (0.8)
-            canvas.toBlob((blob) => {
-              if (!blob) {
-                resolve(file);
-                return;
+              if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
               }
-              const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
-              statusElement.textContent = `✅ Foto ottimizzata! Nuovo peso: ${(optimizedFile.size / (1024 * 1024)).toFixed(2)}MB`;
-              resolve(optimizedFile);
-            }, 'image/jpeg', 0.8);
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              canvas.toBlob((blob) => {
+                if (!blob) {
+                  resolve(file);
+                  return;
+                }
+                const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
+                statusElement.textContent = `✅ Foto ottimizzata! Nuovo peso: ${(optimizedFile.size / (1024 * 1024)).toFixed(2)}MB`;
+                resolve(optimizedFile);
+              }, 'image/jpeg', 0.8);
+
+            } catch (err) {
+              resolve(file);
+            }
           };
+
           img.onerror = () => resolve(file);
         };
+
         reader.onerror = () => resolve(file);
       });
     }
 
     document.getElementById('upload-form-photo').addEventListener('submit', async (e) => {
       e.preventDefault();
-      let file = document.getElementById('photo-file').files[0];
+      const formElement = document.getElementById('upload-form-photo');
+      let fileInput = document.getElementById('photo-file');
+      let file = fileInput.files[0];
       const status = document.getElementById('photo-status');
       const btn = document.getElementById('btn-submit-photo');
 
@@ -1154,36 +1164,58 @@
       status.style.display = "block";
       status.style.color = "var(--primary-color)";
 
-      file = await comprimiFotoSeNecessario(file, status);
+      try {
+        file = await comprimiFotoSeNecessario(file, status);
 
-      status.textContent = "Caricamento su Firebase...";
+        status.textContent = "Caricamento su Firebase...";
 
-      const fileRef = ref(storage, `galleria_foto/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(fileRef, file);
+        const fileRef = ref(storage, `galleria_foto/${Date.now()}_${file.name}`);
+        const uploadTask = uploadBytesResumable(fileRef, file);
 
-      uploadTask.on('state_changed', 
-        (snap) => {
-          const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-          status.textContent = `Caricamento: ${p}%`;
-        }, 
-        (err) => { status.style.color = "#ff4d4d"; status.textContent = "Errore."; btn.disabled = false; }, 
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          try {
-            await addDoc(collection(db, "galleria_foto"), {
-              fotoUrl: downloadURL,
-              storagePath: uploadTask.snapshot.ref.fullPath,
-              dataCaricamento: serverTimestamp()
-            });
-            status.style.color = "#2ecc71";
-            status.textContent = "✅ Fatto!";
-            document.getElementById('upload-form-photo').reset();
-            await caricaFotoFirebase();
-            window.mostraAlert("Successo", "Foto pubblicata per il carosello!", "🖼️");
-          } catch (err) { status.style.color = "#ff4d4d"; status.textContent = "Errore DB."; }
-          finally { btn.disabled = false; setTimeout(() => { status.style.display = "none"; }, 2500); }
-        }
-      );
+        uploadTask.on('state_changed', 
+          (snap) => {
+            const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+            status.textContent = `Caricamento: ${p}%`;
+          }, 
+          (err) => { 
+            console.error(err);
+            status.style.color = "#ff4d4d"; 
+            status.textContent = "Errore durante l'invio."; 
+            btn.disabled = false;
+            formElement.reset();
+          }, 
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              await addDoc(collection(db, "galleria_foto"), {
+                fotoUrl: downloadURL,
+                storagePath: uploadTask.snapshot.ref.fullPath,
+                dataCaricamento: serverTimestamp()
+              });
+              status.style.color = "#2ecc71";
+              status.textContent = "✅ Fatto!";
+              formElement.reset();
+              await caricaFotoFirebase();
+              window.mostraAlert("Successo", "Foto pubblicata per il carosello!", "🖼️");
+            } catch (dbErr) { 
+              console.error(dbErr);
+              status.style.color = "#ff4d4d"; 
+              status.textContent = "Errore salvataggio dati."; 
+              formElement.reset();
+            } finally { 
+              btn.disabled = false; 
+              setTimeout(() => { status.style.display = "none"; }, 2500); 
+            }
+          }
+        );
+
+      } catch (uploadErr) {
+        console.error(uploadErr);
+        status.style.color = "#ff4d4d";
+        status.textContent = "Errore imprevisto sul file.";
+        btn.disabled = false;
+        formElement.reset();
+      }
     });
 
     window.confermaEliminaFoto = function(docId, storagePath) {

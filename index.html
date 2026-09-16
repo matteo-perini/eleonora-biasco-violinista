@@ -749,21 +749,21 @@
       }
     }
 
-    // 2. CARICAMENTO GALLERIA FOTO DINAMICA DA FIREBASE
+    // 2. CARICAMENTO GALLERIA FOTO (UNIONE FIREBASE + LOCALI)
     async function fetchFirebaseGallery() {
       const track = document.getElementById('sliderTrack');
       if (!track) return;
       
+      let slidesHTML = '';
+
+      // A) Carica prima le foto caricate da Firebase
       try {
         const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
         const querySnapshot = await getDocs(q);
 
-        let slidesHTML = '';
-        
         if (!querySnapshot.empty) {
           querySnapshot.forEach((docSnap) => {
             const fotoData = docSnap.data();
-            // Utilizziamo fotoUrl come salvato nel database Firestore
             const imageUrl = fotoData.fotoUrl || fotoData.url || fotoData.imageUrl;
             if (imageUrl) {
               slidesHTML += `
@@ -774,37 +774,29 @@
             }
           });
         }
-
-        // Se non ci sono foto nel database, usa le immagini di fallback locali
-        if (slidesHTML === '') {
-          for (let i = 1; i <= 10; i++) {
-            slidesHTML += `
-              <div class="slide">
-                <img src="img/foto${i}.jpeg" alt="Eleonora Biasco Foto ${i}" onerror="this.onerror=null; this.src='img/foto${i}.jpg';">
-              </div>
-            `;
-          }
-        }
-
-        // Duplica le slide per rendere l'effetto scorrimento infinito fluido
-        track.innerHTML = slidesHTML + slidesHTML + slidesHTML;
-        
-        const totalSlides = track.querySelectorAll('.slide').length;
-        track.style.width = `calc(280px * ${totalSlides})`;
-
       } catch (err) {
-        console.error("Errore recupero galleria fotografica:", err);
-        let fallbackHTML = '';
-        for (let i = 1; i <= 10; i++) {
-          fallbackHTML += `
-            <div class="slide">
-              <img src="img/foto${i}.jpeg" alt="Eleonora Biasco Foto ${i}" onerror="this.onerror=null; this.src='img/foto${i}.jpg';">
-            </div>
-          `;
-        }
-        track.innerHTML = fallbackHTML + fallbackHTML + fallbackHTML;
-        track.style.width = `calc(280px * 30)`;
+        console.error("Errore recupero foto da Firebase:", err);
       }
+
+      // B) Aggiunge anche le foto locali della cartella (da foto1 a foto10)
+      for (let i = 1; i <= 10; i++) {
+        slidesHTML += `
+          <div class="slide">
+            <img src="img/foto${i}.jpeg" alt="Eleonora Biasco Foto ${i}" onerror="this.onerror=null; this.src='img/foto${i}.jpg';">
+          </div>
+        `;
+      }
+
+      // Fallback di sicurezza se la stringa fosse vuota
+      if (slidesHTML === '') {
+        slidesHTML = `<div class="slide"><img src="img/foto1.jpeg" alt="Eleonora Biasco"></div>`;
+      }
+
+      // Duplica le slide per rendere l'effetto scorrimento infinito fluido
+      track.innerHTML = slidesHTML + slidesHTML + slidesHTML;
+      
+      const totalSlides = track.querySelectorAll('.slide').length;
+      track.style.width = `calc(280px * ${totalSlides})`;
     }
 
     window.addEventListener('DOMContentLoaded', () => {

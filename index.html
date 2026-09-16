@@ -763,7 +763,8 @@
         if (!querySnapshot.empty) {
           querySnapshot.forEach((docSnap) => {
             const fotoData = docSnap.data();
-            const imageUrl = fotoData.url || fotoData.imageUrl;
+            // Utilizziamo fotoUrl come salvato nel database Firestore
+            const imageUrl = fotoData.fotoUrl || fotoData.url || fotoData.imageUrl;
             if (imageUrl) {
               slidesHTML += `
                 <div class="slide">

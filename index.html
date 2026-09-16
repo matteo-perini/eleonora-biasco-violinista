@@ -565,50 +565,7 @@
         <button class="carousel-arrow prev" id="reel-prev" title="Precedente">❮</button>
         
         <div class="reels-track" id="reels-track">
-          <div class="video-wrapper reel-card" data-src="video/video1.mp4">
-            <video muted preload="metadata">
-              <source src="video/video1.mp4" type="video/mp4">
-              <source src="video/video1.mov" type="video/quicktime">
-            </video>
-            <div class="play-overlay">▶</div>
-            <div class="reel-caption">🎻 Performance Live</div>
-          </div>
-
-          <div class="video-wrapper reel-card" data-src="video/video2.mp4">
-            <video muted preload="metadata">
-              <source src="video/video2.mp4" type="video/mp4">
-              <source src="video/video2.mov" type="video/quicktime">
-            </video>
-            <div class="play-overlay">▶</div>
-            <div class="reel-caption">🎻 Performance Live</div>
-          </div>
-
-          <div class="video-wrapper reel-card" data-src="video/video3.mp4">
-            <video muted preload="metadata">
-              <source src="video/video3.mp4" type="video/mp4">
-              <source src="video/video3.mov" type="video/quicktime">
-            </video>
-            <div class="play-overlay">▶</div>
-            <div class="reel-caption">🎻 Performance Live</div>
-          </div>
-
-          <div class="video-wrapper reel-card" data-src="video/video4.mp4">
-            <video muted preload="metadata">
-              <source src="video/video4.mp4" type="video/mp4">
-              <source src="video/video4.mov" type="video/quicktime">
-            </video>
-            <div class="play-overlay">▶</div>
-            <div class="reel-caption">🎻 Performance Live</div>
-          </div>
-
-          <div class="video-wrapper reel-card" data-src="video/video5.mp4">
-            <video muted preload="metadata">
-              <source src="video/video5.mp4" type="video/mp4">
-              <source src="video/video5.mov" type="video/quicktime">
-            </video>
-            <div class="play-overlay">▶</div>
-            <div class="reel-caption">🎻 Performance Live</div>
-          </div>
+          <!-- I video dinamici da Firebase verranno inseriti qui -->
         </div>
 
         <button class="carousel-arrow next" id="reel-next" title="Successivo">❯</button>
@@ -745,6 +702,7 @@
     </div>
   </footer>
 
+  <!-- SCRIPT FIREBASE & CARICAMENTO DINAMICO (VIDEO & GALLERY) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -761,6 +719,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // 1. CARICAMENTO VIDEO REELS DINAMICI
     async function fetchFirebaseVideos() {
       try {
         const q = query(collection(db, "video_reels"), orderBy("dataCaricamento", "desc"));
@@ -781,7 +740,7 @@
             <div class="play-overlay">▶</div>
             <div class="reel-caption">🎻 Performance Live</div>
           `;
-          reelsTrack.insertBefore(card, reelsTrack.firstChild);
+          reelsTrack.appendChild(card);
         });
 
         bindVideoModalEvents();
@@ -790,7 +749,67 @@
       }
     }
 
-    window.addEventListener('DOMContentLoaded', fetchFirebaseVideos);
+    // 2. CARICAMENTO GALLERIA FOTO DINAMICA DA FIREBASE
+    async function fetchFirebaseGallery() {
+      const track = document.getElementById('sliderTrack');
+      if (!track) return;
+      
+      try {
+        const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
+        const querySnapshot = await getDocs(q);
+
+        let slidesHTML = '';
+        
+        if (!querySnapshot.empty) {
+          querySnapshot.forEach((docSnap) => {
+            const fotoData = docSnap.data();
+            const imageUrl = fotoData.url || fotoData.imageUrl;
+            if (imageUrl) {
+              slidesHTML += `
+                <div class="slide">
+                  <img src="${imageUrl}" alt="Eleonora Biasco Foto Live">
+                </div>
+              `;
+            }
+          });
+        }
+
+        // Se non ci sono foto nel database, usa le immagini di fallback locali
+        if (slidesHTML === '') {
+          for (let i = 1; i <= 10; i++) {
+            slidesHTML += `
+              <div class="slide">
+                <img src="img/foto${i}.jpeg" alt="Eleonora Biasco Foto ${i}" onerror="this.onerror=null; this.src='img/foto${i}.jpg';">
+              </div>
+            `;
+          }
+        }
+
+        // Duplica le slide per rendere l'effetto scorrimento infinito fluido
+        track.innerHTML = slidesHTML + slidesHTML + slidesHTML;
+        
+        const totalSlides = track.querySelectorAll('.slide').length;
+        track.style.width = `calc(280px * ${totalSlides})`;
+
+      } catch (err) {
+        console.error("Errore recupero galleria fotografica:", err);
+        let fallbackHTML = '';
+        for (let i = 1; i <= 10; i++) {
+          fallbackHTML += `
+            <div class="slide">
+              <img src="img/foto${i}.jpeg" alt="Eleonora Biasco Foto ${i}" onerror="this.onerror=null; this.src='img/foto${i}.jpg';">
+            </div>
+          `;
+        }
+        track.innerHTML = fallbackHTML + fallbackHTML + fallbackHTML;
+        track.style.width = `calc(280px * 30)`;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchFirebaseVideos();
+      fetchFirebaseGallery();
+    });
   </script>
 
   <script>
@@ -814,21 +833,17 @@
           return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
 
-        // Quando carica i metadati mostra la durata totale
         audio.addEventListener('loadedmetadata', () => {
           durationEl.textContent = formatTime(audio.duration);
         });
 
-        // Pulsante Play / Pausa e arresto globale di tutti gli altri media (audio e video)
         playBtn.addEventListener('click', () => {
-          // Ferma tutti gli altri audio e video nella pagina
           document.querySelectorAll('audio, video').forEach(media => {
             if (media !== audio) {
               media.pause();
             }
           });
 
-          // Resetta le icone degli altri custom player
           players.forEach(p => {
             if (p !== player) {
               p.querySelector('.play-icon').style.display = 'block';
@@ -847,7 +862,6 @@
           }
         });
 
-        // Aggiorna barra e tempo durante la riproduzione
         audio.addEventListener('timeupdate', () => {
           if (!isNaN(audio.duration)) {
             const progress = (audio.currentTime / audio.duration) * 100;
@@ -856,7 +870,6 @@
           }
         });
 
-        // Permette di trascinare/cliccare sulla barra per saltare nel brano
         seekbar.addEventListener('input', () => {
           if (!isNaN(audio.duration)) {
             const time = (seekbar.value / 100) * audio.duration;
@@ -864,7 +877,6 @@
           }
         });
 
-        // Quando il brano finisce resetta il tasto
         audio.addEventListener('ended', () => {
           playIcon.style.display = 'block';
           pauseIcon.style.display = 'none';
@@ -902,25 +914,13 @@
       }
     });
 
-    // Slider Galleria Foto con Apertura Popup e Pausa Carosello
+    // Gestione Modale Galleria Foto Popup
     const track = document.getElementById('sliderTrack');
     const imageModal = document.getElementById('imageModal');
     const modalImage = document.getElementById('modalImage');
     const closeImageModal = document.getElementById('closeImageModal');
 
     if (track) {
-      let slidesHTML = '';
-      for (let i = 1; i <= 20; i++) {
-        let extraClass = (i === 11 || i === 19) ? 'fix-contain' : '';
-        slidesHTML += `
-          <div class="slide">
-            <img src="img/foto${i}.jpeg" alt="Eleonora Biasco Foto ${i}" class="${extraClass}" onerror="this.onerror=null; this.src='img/foto${i}.jpg';">
-          </div>
-        `;
-      }
-      track.innerHTML = slidesHTML + slidesHTML + slidesHTML;
-      track.style.width = `calc(280px * 60)`;
-
       track.addEventListener('click', (e) => {
         const clickedImg = e.target.closest('img');
         if (clickedImg && imageModal && modalImage) {
@@ -983,7 +983,6 @@
       videoWrappers.forEach(wrapper => {
         wrapper.onclick = () => {
           document.querySelectorAll('video, audio').forEach(m => m.pause());
-          // Resetta anche i custom player
           document.querySelectorAll('.custom-player').forEach(p => {
             p.querySelector('.play-icon').style.display = 'block';
             p.querySelector('.pause-icon').style.display = 'none';

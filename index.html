@@ -203,7 +203,7 @@
       z-index: 2;
     }
 
-    /* FRECCE DI SCORRIMENTO ESTERNE */
+    /* FRECCE DI SCORRIMENTO ESTERNE (GENERALI) */
     .carousel-arrow {
       position: absolute;
       top: 50%;
@@ -231,6 +231,41 @@
 
     .carousel-arrow.prev { left: -5px; }
     .carousel-arrow.next { right: -5px; }
+
+    /* FRECCE PICCOLE SPECIFICHE PER LA GALLERY PC */
+    .gallery-carousel-wrapper {
+      position: relative;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 45px;
+    }
+
+    .gallery-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid var(--primary-color, #d4af37);
+      color: var(--primary-color, #d4af37);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.3s ease;
+      border-radius: 0 !important;
+    }
+
+    .gallery-arrow:hover {
+      background: var(--primary-color, #d4af37);
+      color: #000000;
+    }
+
+    .gallery-arrow.prev { left: 5px; }
+    .gallery-arrow.next { right: 5px; }
 
     /* MODAL VIDEO POPUP SCHERMO INTERO */
     .video-modal {
@@ -310,12 +345,27 @@
       text-align: center !important;
     }
 
+    /* Stile per mettere in pausa l'animazione della galleria */
+    .slider-track.paused {
+      animation-play-state: paused !important;
+    }
+    
+    .infinite-slider {
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-behavior: smooth;
+    }
+    .infinite-slider::-webkit-scrollbar {
+      display: none;
+    }
+
     @media (max-width: 768px) {
       .reels-carousel-wrapper {
         padding: 0 10px;
       }
-      .carousel-arrow {
-        display: none;
+      .carousel-arrow, .gallery-arrow {
+        display: none !important;
       }
       .video-wrapper.reel-card {
         flex: 0 0 150px !important;
@@ -442,8 +492,16 @@
       <h2 class="reveal-item">Galleria Fotografica</h2>
       <p class="subtitle reveal-item">Il violino: elegante, romantico, potente, pronto a far ballare</p>
     </div>
-    <div class="infinite-slider reveal-item">
-      <div class="slider-track" id="sliderTrack"></div>
+    
+    <!-- WRAPPER CON FRECCE PICCOLE PER PC E SWIPE PER MOBILE -->
+    <div class="gallery-carousel-wrapper reveal-item">
+      <button class="gallery-arrow prev" id="gallery-prev" title="Precedente">❮</button>
+      
+      <div class="infinite-slider" id="infiniteSliderContainer">
+        <div class="slider-track" id="sliderTrack"></div>
+      </div>
+
+      <button class="gallery-arrow next" id="gallery-next" title="Successivo">❯</button>
     </div>
   </section>
 
@@ -754,7 +812,6 @@
 
         if (!reelsTrack) return;
 
-        // Aggiunge i video caricati da Firebase in coda a quelli locali già presenti nell'HTML
         querySnapshot.forEach((docSnap) => {
           const videoData = docSnap.data();
           const card = document.createElement('div');
@@ -783,7 +840,6 @@
       
       let slidesHTML = '';
 
-      // A) Carica prima le foto caricate da Firebase
       try {
         const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
         const querySnapshot = await getDocs(q);
@@ -805,7 +861,6 @@
         console.error("Errore recupero foto da Firebase:", err);
       }
 
-      // B) Aggiunge anche le foto locali della cartella (da foto1 a foto10)
       for (let i = 1; i <= 10; i++) {
         slidesHTML += `
           <div class="slide">
@@ -814,16 +869,17 @@
         `;
       }
 
-      // Fallback di sicurezza se la stringa fosse vuota
       if (slidesHTML === '') {
         slidesHTML = `<div class="slide"><img src="img/foto1.jpeg" alt="Eleonora Biasco"></div>`;
       }
 
-      // Duplica le slide per rendere l'effetto scorrimento infinito fluido
       track.innerHTML = slidesHTML + slidesHTML + slidesHTML;
       
       const totalSlides = track.querySelectorAll('.slide').length;
       track.style.width = `calc(280px * ${totalSlides})`;
+
+      // Attiva i controlli della galleria (Frecce PC + Swipe Mobile con ripartenza a 3s)
+      initGalleryArrowNavigation();
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -833,6 +889,52 @@
   </script>
 
   <script>
+    // LOGICA GALLERIA: Frecce per PC + Swipe con dito su Mobile (con ripartenza automatica dopo 3 secondi)
+    function initGalleryArrowNavigation() {
+      const sliderContainer = document.getElementById('infiniteSliderContainer');
+      const sliderTrack = document.getElementById('sliderTrack');
+      const galleryPrev = document.getElementById('gallery-prev');
+      const galleryNext = document.getElementById('gallery-next');
+
+      if (!sliderContainer || !sliderTrack) return;
+
+      let resumeTimeout = null;
+
+      function pauseAndResumeAutoScroll() {
+        sliderTrack.classList.add('paused');
+        if (resumeTimeout) clearTimeout(resumeTimeout);
+        // Riparte automaticamente dopo 3 secondi di inattività
+        resumeTimeout = setTimeout(() => {
+          sliderTrack.classList.remove('paused');
+        }, 3000);
+      }
+
+      // 1. Gestione Frecce (PC)
+      if (galleryPrev && galleryNext) {
+        galleryPrev.addEventListener('click', () => {
+          sliderContainer.scrollBy({ left: -300, behavior: 'smooth' });
+          pauseAndResumeAutoScroll();
+        });
+        galleryNext.addEventListener('click', () => {
+          sliderContainer.scrollBy({ left: 300, behavior: 'smooth' });
+          pauseAndResumeAutoScroll();
+        });
+      }
+
+      // 2. Gestione Touch/Swipe con il dito (Mobile)
+      sliderContainer.addEventListener('touchstart', () => {
+        sliderTrack.classList.add('paused');
+        if (resumeTimeout) clearTimeout(resumeTimeout);
+      }, { passive: true });
+
+      sliderContainer.addEventListener('touchend', () => {
+        if (resumeTimeout) clearTimeout(resumeTimeout);
+        resumeTimeout = setTimeout(() => {
+          sliderTrack.classList.remove('paused');
+        }, 3000);
+      });
+    }
+
     // LOGICA CUSTOM AUDIO PLAYERS (Gestione impeccabile su PC, Android e iPhone)
     function initCustomAudioPlayers() {
       const players = document.querySelectorAll('.custom-player');

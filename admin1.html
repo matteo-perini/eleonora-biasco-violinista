@@ -521,7 +521,7 @@
         </div>
       </div>
 
-      <!-- GESTIONE FOTO (CON AUTOCOMPRESSIONE > 2 MB E QUALITÀ AL 80%) -->
+      <!-- GESTIONE FOTO (CON CONVERSIONE UNIVERSALE HEIC/JPG E COMPRESSIONE) -->
       <div class="admin-box">
         <h3 class="admin-section-title">🖼️ Gestione Foto Carosello (Index)</h3>
 
@@ -1058,7 +1058,7 @@
       );
     };
 
-    // --- GESTIONE FOTO (CON AUTOCOMPRESSIONE > 2 MB, SUPPORTO UNIVERSALE E ANTI-BLOCCO) ---
+    // --- GESTIONE FOTO (CONVERSIONE SEMPRE ATTIVA E OTTIMIZZAZIONE) ---
     async function caricaFotoFirebase() {
       try {
         const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
@@ -1096,12 +1096,12 @@
     }
 
     async function comprimiFotoSeNecessario(file, statusElement) {
-      const LIMITE_MB = 2; // Soglia 2 MB
+      if (!file.type.startsWith('image/') && !file.name.toLowerCase().endsWith('.heic') && !file.name.toLowerCase().endsWith('.heif')) {
+        return file;
+      }
+
       const fileMB = file.size / (1024 * 1024);
-
-      if (fileMB <= LIMITE_MB || !file.type.startsWith('image/')) return file;
-
-      statusElement.textContent = `⚡ Foto grande (${fileMB.toFixed(1)}MB): ottimizzazione in corso...`;
+      statusElement.textContent = `⚡ Conversione e ottimizzazione in corso (${fileMB.toFixed(1)}MB)...`;
 
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -1134,9 +1134,9 @@
                   return;
                 }
                 const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
-                statusElement.textContent = `✅ Foto ottimizzata! Nuovo peso: ${(optimizedFile.size / (1024 * 1024)).toFixed(2)}MB`;
+                statusElement.textContent = `✅ Foto convertita! Nuovo peso: ${(optimizedFile.size / (1024 * 1024)).toFixed(2)}MB`;
                 resolve(optimizedFile);
-              }, 'image/jpeg', 0.8);
+              }, 'image/jpeg', 0.85);
 
             } catch (err) {
               resolve(file);

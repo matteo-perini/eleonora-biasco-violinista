@@ -138,10 +138,15 @@
       margin-top: 2px;
     }
 
-    .btn-invia:hover {
+    .btn-invia:hover:not(:disabled) {
       background: var(--primary-color, #d4af37);
       color: #121212;
       box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+    }
+    
+    .btn-invia:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     /* BOTTONE A TENDINA */
@@ -296,6 +301,7 @@
       text-align: center;
       margin-top: -2px;
       display: none;
+      font-weight: 500;
     }
 
     /* MODALE POPUP PERSONALIZZATO */
@@ -415,7 +421,7 @@
           <input type="password" id="login-password" placeholder="Inserisci password" required>
         </div>
         <div id="login-error">Credenziali errate o non autorizzate.</div>
-        <button type="submit" class="btn-invia">Accedi</button>
+        <button type="submit" class="btn-invia" id="btn-login">Accedi</button>
       </form>
     </div>
 
@@ -442,7 +448,7 @@
             <input type="password" id="confirm-password" placeholder="Ripeti nuova password" required minlength="6">
           </div>
           <div id="password-status" class="status-msg"></div>
-          <button type="submit" class="btn-invia">Aggiorna Password</button>
+          <button type="submit" class="btn-invia" id="btn-change-pwd">Aggiorna Password</button>
         </form>
       </div>
 
@@ -496,7 +502,7 @@
         </div>
       </div>
 
-      <!-- GESTIONE VIDEO (CON AUTOCOMPRESSIONE > 20 MB) -->
+      <!-- GESTIONE VIDEO (CON AUTOCOMPRESSIONE) -->
       <div class="admin-box">
         <h3 class="admin-section-title">🎬 Gestione Video / Reels</h3>
 
@@ -521,14 +527,17 @@
         </div>
       </div>
 
-      <!-- GESTIONE FOTO (CON CONVERSIONE UNIVERSALE HEIC/JPG E COMPRESSIONE) -->
+      <!-- GESTIONE FOTO (FORZATURA A JPEG PERFETTA) -->
       <div class="admin-box">
         <h3 class="admin-section-title">🖼️ Gestione Foto Carosello (Index)</h3>
 
         <form id="upload-form-photo" class="admin-form">
           <div class="gruppo-input">
-            <label for="photo-file">File Foto (JPG, JPEG, PNG, HEIC)</label>
-            <input type="file" id="photo-file" accept="image/*, .heic, .heif" required>
+            <label for="photo-file">File Foto (JPG, PNG, HEIC)</label>
+            <input type="file" id="photo-file" accept="image/jpeg, image/png, image/webp, .heic, .heif" required>
+            <small style="color: var(--text-muted, #aaaaaa); font-size: 0.65rem; margin-top: 4px; display: block;">
+              💡 <strong>Novità:</strong> Tutte le foto verranno convertite automaticamente e forzatamente in formato <strong>JPEG</strong>. Se il tuo PC si rifiuta di elaborare un formato Apple (HEIC), riceverai un avviso per salvarlo prima in JPG!
+            </small>
           </div>
           <div id="photo-status" class="status-msg"></div>
           <button type="submit" class="btn-invia" id="btn-submit-photo">🖼️ Pubblica Foto</button>
@@ -547,7 +556,6 @@
       </div>
 
     </div>
-
   </div>
 
   <!-- MODALI -->
@@ -571,7 +579,7 @@
           </select>
         </div>
         <div style="display: flex; gap: 6px; margin-top: 6px;">
-          <button type="submit" class="btn-invia" style="padding: 6px;">Salva</button>
+          <button type="submit" class="btn-invia" style="padding: 6px;" id="btn-edit-save">Salva</button>
           <button type="button" class="btn-invia" style="background: transparent; color: #fff; border-color: rgba(255,255,255,0.3); padding: 6px;" onclick="window.closeEditModal()">Annulla</button>
         </div>
       </form>
@@ -632,13 +640,18 @@
       e.preventDefault();
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value.trim();
+      const btn = document.getElementById('btn-login');
+      
       loginError.style.display = "none";
+      btn.disabled = true;
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
       } catch (err) {
         console.error(err);
         loginError.style.display = "block";
+      } finally {
+        btn.disabled = false;
       }
     });
 
@@ -658,6 +671,7 @@
       const newPass = document.getElementById('new-password').value.trim();
       const confirmPass = document.getElementById('confirm-password').value.trim();
       const statusMsg = document.getElementById('password-status');
+      const btn = document.getElementById('btn-change-pwd');
 
       statusMsg.style.display = "block";
 
@@ -667,7 +681,9 @@
         return;
       }
 
+      btn.disabled = true;
       const user = auth.currentUser;
+      
       if (user) {
         try {
           await updatePassword(user, newPass);
@@ -677,7 +693,10 @@
           window.mostraAlert("Sicurezza", "Password modificata con successo!", "🔒");
         } catch (err) {
           statusMsg.style.color = "#ff4d4d";
-          statusMsg.textContent = "Errore: effettua nuovamente il login.";
+          statusMsg.textContent = "Errore: sessione scaduta, effettua nuovamente il login.";
+        } finally {
+          btn.disabled = false;
+          setTimeout(() => { statusMsg.style.display = "none"; }, 3500);
         }
       }
     });
@@ -856,8 +875,10 @@
       const docId = document.getElementById('edit-doc-id').value;
       const newTitle = document.getElementById('edit-title').value.trim();
       const newCat = document.getElementById('edit-category').value;
+      const btn = document.getElementById('btn-edit-save');
 
       if (!docId || !newTitle) return;
+      btn.disabled = true;
 
       try {
         await updateDoc(doc(db, "repertorio", docId), {
@@ -868,6 +889,7 @@
         await caricaBraniFirebase();
         window.mostraAlert("Modifica", "Brano aggiornato!", "✨");
       } catch (err) { window.mostraAlert("Errore", "Impossibile aggiornare.", "❌"); }
+      finally { btn.disabled = false; }
     });
 
     window.confermaEliminaBrano = function(docId, storagePath) {
@@ -886,7 +908,7 @@
       );
     };
 
-    // --- GESTIONE VIDEO (CON AUTOCOMPRESSIONE > 20 MB) ---
+    // --- GESTIONE VIDEO ---
     async function caricaVideoFirebase() {
       try {
         const q = query(collection(db, "video_reels"), orderBy("dataCaricamento", "desc"));
@@ -929,7 +951,7 @@
 
       if (fileMB <= LIMITE_MB) return file;
 
-      statusElement.textContent = `⚡ Video grande (${fileMB.toFixed(1)}MB): compressione in corso...`;
+      statusElement.textContent = `⚡ Video grande (${fileMB.toFixed(1)}MB): compressione in corso (potrebbe richiedere tempo)...`;
 
       return new Promise((resolve) => {
         const video = document.createElement('video');
@@ -963,7 +985,7 @@
           try {
             mediaRecorder = new MediaRecorder(stream, recorderOptions);
           } catch (e) {
-            resolve(file);
+            resolve(file); // fallback se fallisce
             return;
           }
 
@@ -977,11 +999,11 @@
           };
 
           mediaRecorder.start();
-          video.play();
+          video.play().catch(()=> resolve(file));
 
           function drawFrame() {
             if (video.paused || video.ended) {
-              mediaRecorder.stop();
+              if(mediaRecorder.state !== 'inactive') mediaRecorder.stop();
               return;
             }
             ctx.drawImage(video, 0, 0, width, height);
@@ -1022,7 +1044,7 @@
           const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
           status.textContent = `Caricamento: ${p}%`;
         }, 
-        (err) => { status.style.color = "#ff4d4d"; status.textContent = "Errore."; btn.disabled = false; }, 
+        (err) => { status.style.color = "#ff4d4d"; status.textContent = "Errore durante il caricamento."; btn.disabled = false; }, 
         async () => {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           try {
@@ -1058,7 +1080,7 @@
       );
     };
 
-    // --- GESTIONE FOTO (CONVERSIONE SEMPRE ATTIVA E OTTIMIZZAZIONE) ---
+    // --- GESTIONE FOTO CON PROTEZIONE BLOCCO SCHERMO NERO ---
     async function caricaFotoFirebase() {
       try {
         const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
@@ -1096,12 +1118,14 @@
     }
 
     async function comprimiFotoSeNecessario(file, statusElement) {
-      if (!file.type.startsWith('image/') && !file.name.toLowerCase().endsWith('.heic') && !file.name.toLowerCase().endsWith('.heif')) {
+      // Passa oltre se non è immagine, ma controlla comunque HEIC/HEIF
+      const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+      
+      if (!file.type.startsWith('image/') && !isHeic && !file.name.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/)) {
         return file;
       }
 
-      const fileMB = file.size / (1024 * 1024);
-      statusElement.textContent = `⚡ Conversione e ottimizzazione in corso (${fileMB.toFixed(1)}MB)...`;
+      statusElement.textContent = `⚡ Ottimizzazione e forzatura in JPEG in corso...`;
 
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -1116,7 +1140,7 @@
               const canvas = document.createElement('canvas');
               let width = img.width;
               let height = img.height;
-              const maxWidth = 1920; // Full HD standard web
+              const maxWidth = 1920; 
 
               if (width > maxWidth) {
                 height = Math.round((height * maxWidth) / width);
@@ -1128,25 +1152,32 @@
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
 
+              // FORZATURA ASSOLUTA A JPEG
               canvas.toBlob((blob) => {
                 if (!blob) {
-                  resolve(file);
+                  resolve(null); // Segnala Errore Critico
                   return;
                 }
-                const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
-                statusElement.textContent = `✅ Foto convertita! Nuovo peso: ${(optimizedFile.size / (1024 * 1024)).toFixed(2)}MB`;
-                resolve(optimizedFile);
+                // Rimuove vecchia estensione e appiccica .jpg
+                const cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                const forcedJpegFile = new File([blob], cleanName + ".jpg", { type: 'image/jpeg' });
+                
+                statusElement.textContent = `✅ Convertito in JPEG con successo!`;
+                resolve(forcedJpegFile);
               }, 'image/jpeg', 0.85);
 
             } catch (err) {
-              resolve(file);
+              resolve(null);
             }
           };
 
-          img.onerror = () => resolve(file);
+          img.onerror = () => {
+            // Se il browser fallisce a leggere il file (come un HEIC su PC Windows)
+            resolve(null);
+          };
         };
 
-        reader.onerror = () => resolve(file);
+        reader.onerror = () => resolve(null);
       });
     }
 
@@ -1167,7 +1198,15 @@
       try {
         file = await comprimiFotoSeNecessario(file, status);
 
-        status.textContent = "Caricamento su Firebase...";
+        // Se la conversione fallisce o il file è illeggibile dal browser, blocca l'upload per evitare danni al sito
+        if (!file) {
+           status.style.color = "#ff4d4d";
+           status.textContent = "⚠️ Formato illeggibile! Il tuo dispositivo non riesce a elaborarlo. Salva la foto in JPG prima di caricarla.";
+           btn.disabled = false;
+           return; // Interrompe il processo qui
+        }
+
+        status.textContent = "Caricamento sicuro su Firebase...";
 
         const fileRef = ref(storage, `galleria_foto/${Date.now()}_${file.name}`);
         const uploadTask = uploadBytesResumable(fileRef, file);
@@ -1182,7 +1221,6 @@
             status.style.color = "#ff4d4d"; 
             status.textContent = "Errore durante l'invio."; 
             btn.disabled = false;
-            formElement.reset();
           }, 
           async () => {
             try {
@@ -1196,15 +1234,14 @@
               status.textContent = "✅ Fatto!";
               formElement.reset();
               await caricaFotoFirebase();
-              window.mostraAlert("Successo", "Foto pubblicata per il carosello!", "🖼️");
+              window.mostraAlert("Successo", "Foto caricata! Sul sito apparirà perfettamente.", "🖼️");
             } catch (dbErr) { 
               console.error(dbErr);
               status.style.color = "#ff4d4d"; 
               status.textContent = "Errore salvataggio dati."; 
-              formElement.reset();
             } finally { 
               btn.disabled = false; 
-              setTimeout(() => { status.style.display = "none"; }, 2500); 
+              setTimeout(() => { status.style.display = "none"; }, 4000); 
             }
           }
         );
@@ -1214,7 +1251,6 @@
         status.style.color = "#ff4d4d";
         status.textContent = "Errore imprevisto sul file.";
         btn.disabled = false;
-        formElement.reset();
       }
     });
 

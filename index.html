@@ -565,7 +565,7 @@
         <button class="carousel-arrow prev" id="reel-prev" title="Precedente">❮</button>
         
         <div class="reels-track" id="reels-track">
-          <!-- I video locali fissi verranno caricati qui per primi -->
+          <!-- Tutti i 5 video locali presenti nella cartella video/ -->
           <div class="video-wrapper reel-card" data-src="video/video1.mp4">
             <video muted preload="metadata"><source src="video/video1.mp4" type="video/mp4"></video>
             <div class="play-overlay">▶</div>
@@ -576,7 +576,22 @@
             <div class="play-overlay">▶</div>
             <div class="reel-caption">🎻 Performance Live 2</div>
           </div>
-          <!-- I video dinamici da Firebase verranno accodati qui sotto -->
+          <div class="video-wrapper reel-card" data-src="video/video3.mp4">
+            <video muted preload="metadata"><source src="video/video3.mp4" type="video/mp4"></video>
+            <div class="play-overlay">▶</div>
+            <div class="reel-caption">🎻 Performance Live 3</div>
+          </div>
+          <div class="video-wrapper reel-card" data-src="video/video4.mp4">
+            <video muted preload="metadata"><source src="video/video4.mp4" type="video/mp4"></video>
+            <div class="play-overlay">▶</div>
+            <div class="reel-caption">🎻 Performance Live 4</div>
+          </div>
+          <div class="video-wrapper reel-card" data-src="video/video5.mp4">
+            <video muted preload="metadata"><source src="video/video5.mp4" type="video/mp4"></video>
+            <div class="play-overlay">▶</div>
+            <div class="reel-caption">🎻 Performance Live 5</div>
+          </div>
+          <!-- I video dinamici caricati da Firebase verranno accodati qui automaticamente -->
         </div>
 
         <button class="carousel-arrow next" id="reel-next" title="Successivo">❯</button>

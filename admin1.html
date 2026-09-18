@@ -6,8 +6,8 @@
   <title>Pannello Admin | Eleonora Biasco</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <!-- Libreria per la conversione automatica di HEIC/HEIF su qualsiasi browser -->
-  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <!-- Libreria moderna e avanzata per la conversione HEIC via browser -->
+  <script src="https://cdn.jsdelivr.net/npm/heic-to@1.1.2/dist/browser.umd.js"></script>
   <style>
     /* ANGOLI RIGOROSAMENTE SQUADRATI E DESIGN SUPER COMPATTO */
     *, *::before, *::after {
@@ -529,7 +529,7 @@
         </div>
       </div>
 
-      <!-- GESTIONE FOTO (CON GESTIONE ROBUSTA HEIC/HEIF) -->
+      <!-- GESTIONE FOTO (CON MOTORE HEIC-TO AVANZATO) -->
       <div class="admin-box">
         <h3 class="admin-section-title">🖼️ Gestione Foto Carosello (Index)</h3>
 
@@ -538,7 +538,7 @@
             <label for="photo-file">File Foto (JPG, PNG, HEIC, HEIF)</label>
             <input type="file" id="photo-file" accept="image/jpeg, image/png, image/webp, .heic, .HEIC, .heif, .HEIF" required>
             <small style="color: var(--text-muted, #aaaaaa); font-size: 0.65rem; margin-top: 4px; display: block;">
-              💡 <strong>Conversione Automatica:</strong> Le foto Apple (HEIC) vengono convertite in JPEG. Se un file risulta incompatibile, salva la foto in formato standard JPG.
+              💡 <strong>Conversione Avanzata:</strong> Qualsiasi file Apple (HEIC / HEIF) viene convertito automaticamente in JPEG tramite motore di decodifica ad alte prestazioni.
             </small>
           </div>
           <div id="photo-status" class="status-msg"></div>
@@ -1082,7 +1082,7 @@
       );
     };
 
-    // --- GESTIONE FOTO CON GESTIONE ROBUSTA HEIC/HEIF ---
+    // --- GESTIONE FOTO CON MOTORE HEIC-TO ---
     async function caricaFotoFirebase() {
       try {
         const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
@@ -1133,19 +1133,19 @@
         try {
           let targetFile = file;
 
-          if (isHeic && typeof heic2any !== 'undefined') {
+          // Conversione HEIC tramite la libreria heic-to (basata su libheif)
+          if (isHeic && typeof heicTo !== 'undefined') {
             statusElement.textContent = `🔄 Conversione formato Apple (HEIC) in JPEG...`;
             try {
-              const convertedBlob = await heic2any({
+              const convertedBlob = await heicTo({
                 blob: file,
-                toType: "image/jpeg",
+                type: "image/jpeg",
                 quality: 0.85
               });
-              const blobToUse = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
               const cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-              targetFile = new File([blobToUse], cleanName + ".jpg", { type: 'image/jpeg' });
+              targetFile = new File([convertedBlob], cleanName + ".jpg", { type: 'image/jpeg' });
             } catch (heicErr) {
-              console.warn("Conversione HEIC non riuscita per questo file specifico.", heicErr);
+              console.error("Errore conversione heic-to:", heicErr);
               resolve(null);
               return;
             }
@@ -1222,7 +1222,7 @@
 
         if (!file) {
            status.style.color = "#ff4d4d";
-           status.textContent = "⚠️ Formato HEIC non leggibile dal browser. Salva la foto in JPG e caricala.";
+           status.textContent = "⚠️ Formato HEIC non leggibile. Prova a convertire l'immagine in JPG.";
            btn.disabled = false;
            return;
         }

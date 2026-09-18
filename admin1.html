@@ -6,6 +6,8 @@
   <title>Pannello Admin | Eleonora Biasco</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Libreria per la conversione automatica di HEIC/HEIF su qualsiasi browser -->
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <style>
     /* ANGOLI RIGOROSAMENTE SQUADRATI E DESIGN SUPER COMPATTO */
     *, *::before, *::after {
@@ -502,7 +504,7 @@
         </div>
       </div>
 
-      <!-- GESTIONE VIDEO (CON AUTOCOMPRESSIONE) -->
+      <!-- GESTIONE VIDEO -->
       <div class="admin-box">
         <h3 class="admin-section-title">🎬 Gestione Video / Reels</h3>
 
@@ -527,16 +529,16 @@
         </div>
       </div>
 
-      <!-- GESTIONE FOTO (FORZATURA A JPEG PERFETTA) -->
+      <!-- GESTIONE FOTO (CON CONVERSIONE AUTOMATICA HEIC/HEIF ROBUSTA) -->
       <div class="admin-box">
         <h3 class="admin-section-title">🖼️ Gestione Foto Carosello (Index)</h3>
 
         <form id="upload-form-photo" class="admin-form">
           <div class="gruppo-input">
-            <label for="photo-file">File Foto (JPG, PNG, HEIC)</label>
-            <input type="file" id="photo-file" accept="image/jpeg, image/png, image/webp, .heic, .heif" required>
+            <label for="photo-file">File Foto (JPG, PNG, HEIC, HEIF)</label>
+            <input type="file" id="photo-file" accept="image/jpeg, image/png, image/webp, .heic, .HEIC, .heif, .HEIF" required>
             <small style="color: var(--text-muted, #aaaaaa); font-size: 0.65rem; margin-top: 4px; display: block;">
-              💡 <strong>Novità:</strong> Tutte le foto verranno convertite automaticamente e forzatamente in formato <strong>JPEG</strong>. Se il tuo PC si rifiuta di elaborare un formato Apple (HEIC), riceverai un avviso per salvarlo prima in JPG!
+              💡 <strong>Conversione Automatica:</strong> Qualsiasi formato (inclusi <strong>.HEIC / .heic</strong> di iPhone) verrà convertito e forzato al volo in formato <strong>JPEG</strong>.
             </small>
           </div>
           <div id="photo-status" class="status-msg"></div>
@@ -985,11 +987,13 @@
           try {
             mediaRecorder = new MediaRecorder(stream, recorderOptions);
           } catch (e) {
-            resolve(file); // fallback se fallisce
+            resolve(file); 
             return;
           }
 
           const chunks = [];
+          mediaRecorder.ondataavailable = (e) => chunks.data && chunks.push(e.data); // safe
+          // Onerror / Onstop
           mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
           mediaRecorder.onstop = () => {
             const blob = new Blob(chunks, { type: 'video/mp4' });
@@ -1080,7 +1084,7 @@
       );
     };
 
-    // --- GESTIONE FOTO CON PROTEZIONE BLOCCO SCHERMO NERO ---
+    // --- GESTIONE FOTO CON CONVERSIONE HEIC/HEIF ROBUSTA ---
     async function caricaFotoFirebase() {
       try {
         const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
@@ -1118,66 +1122,87 @@
     }
 
     async function comprimiFotoSeNecessario(file, statusElement) {
-      // Passa oltre se non è immagine, ma controlla comunque HEIC/HEIF
-      const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+      const fileNameLower = file.name.toLowerCase();
+      const isHeic = fileNameLower.endsWith('.heic') || fileNameLower.endsWith('.heif');
       
-      if (!file.type.startsWith('image/') && !isHeic && !file.name.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/)) {
+      if (!file.type.startsWith('image/') && !isHeic && !fileNameLower.match(/\.(jpg|jpeg|png|webp)$/)) {
         return file;
       }
 
-      statusElement.textContent = `⚡ Ottimizzazione e forzatura in JPEG in corso...`;
+      statusElement.textContent = `⚡ Ottimizzazione e conversione in corso...`;
 
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        
-        reader.onload = (event) => {
-          const img = new Image();
-          img.src = event.target.result;
-          
-          img.onload = () => {
+      return new Promise(async (resolve) => {
+        try {
+          let targetFile = file;
+
+          // Se è un file HEIC o HEIF (minuscolo o maiuscolo), usiamo heic2any per trasformarlo in JPEG
+          if (isHeic && typeof heic2any !== 'undefined') {
+            statusElement.textContent = `🔄 Conversione formato Apple (HEIC) in JPEG...`;
             try {
-              const canvas = document.createElement('canvas');
-              let width = img.width;
-              let height = img.height;
-              const maxWidth = 1920; 
-
-              if (width > maxWidth) {
-                height = Math.round((height * maxWidth) / width);
-                width = maxWidth;
-              }
-
-              canvas.width = width;
-              canvas.height = height;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, width, height);
-
-              // FORZATURA ASSOLUTA A JPEG
-              canvas.toBlob((blob) => {
-                if (!blob) {
-                  resolve(null); // Segnala Errore Critico
-                  return;
-                }
-                // Rimuove vecchia estensione e appiccica .jpg
-                const cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                const forcedJpegFile = new File([blob], cleanName + ".jpg", { type: 'image/jpeg' });
-                
-                statusElement.textContent = `✅ Convertito in JPEG con successo!`;
-                resolve(forcedJpegFile);
-              }, 'image/jpeg', 0.85);
-
-            } catch (err) {
+              const convertedBlob = await heic2any({
+                blob: file,
+                toType: "image/jpeg",
+                quality: 0.85
+              });
+              const blobToUse = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+              const cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+              targetFile = new File([blobToUse], cleanName + ".jpg", { type: 'image/jpeg' });
+            } catch (heicErr) {
+              console.error("Errore heic2any:", heicErr);
               resolve(null);
+              return;
             }
+          }
+
+          const reader = new FileReader();
+          reader.readAsDataURL(targetFile);
+          
+          reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            
+            img.onload = () => {
+              try {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxWidth = 1920; 
+
+                if (width > maxWidth) {
+                  height = Math.round((height * maxWidth) / width);
+                  width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                  if (!blob) {
+                    resolve(null);
+                    return;
+                  }
+                  const cleanName = targetFile.name.substring(0, targetFile.name.lastIndexOf('.')) || targetFile.name;
+                  const forcedJpegFile = new File([blob], cleanName + ".jpg", { type: 'image/jpeg' });
+                  
+                  statusElement.textContent = `✅ Convertito in JPEG con successo!`;
+                  resolve(forcedJpegFile);
+                }, 'image/jpeg', 0.85);
+
+              } catch (err) {
+                resolve(null);
+              }
+            };
+
+            img.onerror = () => resolve(null);
           };
 
-          img.onerror = () => {
-            // Se il browser fallisce a leggere il file (come un HEIC su PC Windows)
-            resolve(null);
-          };
-        };
+          reader.onerror = () => resolve(null);
 
-        reader.onerror = () => resolve(null);
+        } catch (err) {
+          resolve(null);
+        }
       });
     }
 
@@ -1198,12 +1223,11 @@
       try {
         file = await comprimiFotoSeNecessario(file, status);
 
-        // Se la conversione fallisce o il file è illeggibile dal browser, blocca l'upload per evitare danni al sito
         if (!file) {
            status.style.color = "#ff4d4d";
-           status.textContent = "⚠️ Formato illeggibile! Il tuo dispositivo non riesce a elaborarlo. Salva la foto in JPG prima di caricarla.";
+           status.textContent = "⚠️ Errore di elaborazione del file. Riprova con un altro formato.";
            btn.disabled = false;
-           return; // Interrompe il processo qui
+           return;
         }
 
         status.textContent = "Caricamento sicuro su Firebase...";

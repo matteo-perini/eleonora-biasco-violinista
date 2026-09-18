@@ -529,7 +529,7 @@
         </div>
       </div>
 
-      <!-- GESTIONE FOTO (CON CONVERSIONE AUTOMATICA HEIC/HEIF ROBUSTA) -->
+      <!-- GESTIONE FOTO (CON GESTIONE ROBUSTA HEIC/HEIF) -->
       <div class="admin-box">
         <h3 class="admin-section-title">🖼️ Gestione Foto Carosello (Index)</h3>
 
@@ -538,7 +538,7 @@
             <label for="photo-file">File Foto (JPG, PNG, HEIC, HEIF)</label>
             <input type="file" id="photo-file" accept="image/jpeg, image/png, image/webp, .heic, .HEIC, .heif, .HEIF" required>
             <small style="color: var(--text-muted, #aaaaaa); font-size: 0.65rem; margin-top: 4px; display: block;">
-              💡 <strong>Conversione Automatica:</strong> Qualsiasi formato (inclusi <strong>.HEIC / .heic</strong> di iPhone) verrà convertito e forzato al volo in formato <strong>JPEG</strong>.
+              💡 <strong>Conversione Automatica:</strong> Le foto Apple (HEIC) vengono convertite in JPEG. Se un file risulta incompatibile, salva la foto in formato standard JPG.
             </small>
           </div>
           <div id="photo-status" class="status-msg"></div>
@@ -992,8 +992,6 @@
           }
 
           const chunks = [];
-          mediaRecorder.ondataavailable = (e) => chunks.data && chunks.push(e.data); // safe
-          // Onerror / Onstop
           mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
           mediaRecorder.onstop = () => {
             const blob = new Blob(chunks, { type: 'video/mp4' });
@@ -1084,7 +1082,7 @@
       );
     };
 
-    // --- GESTIONE FOTO CON CONVERSIONE HEIC/HEIF ROBUSTA ---
+    // --- GESTIONE FOTO CON GESTIONE ROBUSTA HEIC/HEIF ---
     async function caricaFotoFirebase() {
       try {
         const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
@@ -1135,7 +1133,6 @@
         try {
           let targetFile = file;
 
-          // Se è un file HEIC o HEIF (minuscolo o maiuscolo), usiamo heic2any per trasformarlo in JPEG
           if (isHeic && typeof heic2any !== 'undefined') {
             statusElement.textContent = `🔄 Conversione formato Apple (HEIC) in JPEG...`;
             try {
@@ -1148,7 +1145,7 @@
               const cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
               targetFile = new File([blobToUse], cleanName + ".jpg", { type: 'image/jpeg' });
             } catch (heicErr) {
-              console.error("Errore heic2any:", heicErr);
+              console.warn("Conversione HEIC non riuscita per questo file specifico.", heicErr);
               resolve(null);
               return;
             }
@@ -1225,7 +1222,7 @@
 
         if (!file) {
            status.style.color = "#ff4d4d";
-           status.textContent = "⚠️ Errore di elaborazione del file. Riprova con un altro formato.";
+           status.textContent = "⚠️ Formato HEIC non leggibile dal browser. Salva la foto in JPG e caricala.";
            btn.disabled = false;
            return;
         }

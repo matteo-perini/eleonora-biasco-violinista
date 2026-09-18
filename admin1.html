@@ -529,16 +529,23 @@
         </div>
       </div>
 
-      <!-- GESTIONE FOTO (CON MOTORE HEIC-TO AVANZATO) -->
+      <!-- GESTIONE FOTO (CON MOTORE HEIC-TO AVANZATO + LINK CONVERTITORE SEPARATO) -->
       <div class="admin-box">
         <h3 class="admin-section-title">🖼️ Gestione Foto Carosello (Index)</h3>
+
+        <!-- PULSANTE RAPIDO PER IL CONVERTITORE HEIC DEDICATO -->
+        <div style="margin-bottom: 12px;">
+          <a href="convertitore.html" target="_blank" style="display: block; background: rgba(212, 175, 55, 0.1); border: 1px dashed rgba(212, 175, 55, 0.5); color: var(--primary-color, #d4af37); padding: 7px 10px; text-align: center; text-decoration: none; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; transition: all 0.3s ease;">
+            🔄 Convertitore HEIC Rapido (Apri pagina dedicata)
+          </a>
+        </div>
 
         <form id="upload-form-photo" class="admin-form">
           <div class="gruppo-input">
             <label for="photo-file">File Foto (JPG, PNG, HEIC, HEIF)</label>
             <input type="file" id="photo-file" accept="image/jpeg, image/png, image/webp, .heic, .HEIC, .heif, .HEIF" required>
             <small style="color: var(--text-muted, #aaaaaa); font-size: 0.65rem; margin-top: 4px; display: block;">
-              💡 <strong>Conversione Avanzata:</strong> Qualsiasi file Apple (HEIC / HEIF) viene convertito automaticamente in JPEG tramite motore di decodifica ad alte prestazioni.
+              💡 <strong>Conversione Automatica & Manuale:</strong> I file HEIC vengono convertiti al volo. Se un file fa i capricci, usa il convertitore rapido qui sopra.
             </small>
           </div>
           <div id="photo-status" class="status-msg"></div>
@@ -1133,7 +1140,6 @@
         try {
           let targetFile = file;
 
-          // Conversione HEIC tramite la libreria heic-to (basata su libheif)
           if (isHeic && typeof heicTo !== 'undefined') {
             statusElement.textContent = `🔄 Conversione formato Apple (HEIC) in JPEG...`;
             try {
@@ -1222,7 +1228,7 @@
 
         if (!file) {
            status.style.color = "#ff4d4d";
-           status.textContent = "⚠️ Formato HEIC non leggibile. Prova a convertire l'immagine in JPG.";
+           status.textContent = "⚠️ Formato HEIC non leggibile. Apri il Convertitore Rapido qui sopra per trasformarla in JPG!";
            btn.disabled = false;
            return;
         }

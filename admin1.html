@@ -6,8 +6,6 @@
   <title>Pannello Admin | Eleonora Biasco</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <!-- Libreria moderna e avanzata per la conversione HEIC via browser -->
-  <script src="https://cdn.jsdelivr.net/npm/heic-to@1.1.2/dist/browser.umd.js"></script>
   <style>
     /* ANGOLI RIGOROSAMENTE SQUADRATI E DESIGN SUPER COMPATTO */
     *, *::before, *::after {
@@ -529,23 +527,16 @@
         </div>
       </div>
 
-      <!-- GESTIONE FOTO (CON MOTORE HEIC-TO AVANZATO + LINK CONVERTITORE SEPARATO) -->
+      <!-- GESTIONE FOTO (CON CONVERSIONE AUTOMATICA LATO CLOUD) -->
       <div class="admin-box">
         <h3 class="admin-section-title">🖼️ Gestione Foto Carosello (Index)</h3>
-
-        <!-- PULSANTE RAPIDO PER IL CONVERTITORE HEIC DEDICATO -->
-        <div style="margin-bottom: 12px;">
-          <a href="convertitore.html" target="_blank" style="display: block; background: rgba(212, 175, 55, 0.1); border: 1px dashed rgba(212, 175, 55, 0.5); color: var(--primary-color, #d4af37); padding: 7px 10px; text-align: center; text-decoration: none; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; transition: all 0.3s ease;">
-            🔄 Convertitore HEIC Rapido (Apri pagina dedicata)
-          </a>
-        </div>
 
         <form id="upload-form-photo" class="admin-form">
           <div class="gruppo-input">
             <label for="photo-file">File Foto (JPG, PNG, HEIC, HEIF)</label>
             <input type="file" id="photo-file" accept="image/jpeg, image/png, image/webp, .heic, .HEIC, .heif, .HEIF" required>
             <small style="color: var(--text-muted, #aaaaaa); font-size: 0.65rem; margin-top: 4px; display: block;">
-              💡 <strong>Conversione Automatica & Manuale:</strong> I file HEIC vengono convertiti al volo. Se un file fa i capricci, usa il convertitore rapido qui sopra.
+              💡 <strong>Cloud Automatico:</strong> I file HEIC e le foto pesanti vengono convertiti e compressi direttamente sul server in automatico.
             </small>
           </div>
           <div id="photo-status" class="status-msg"></div>
@@ -1089,7 +1080,7 @@
       );
     };
 
-    // --- GESTIONE FOTO CON MOTORE HEIC-TO ---
+    // --- GESTIONE FOTO (CONVERSIONE GESTITA DAL CLOUD AUTOMATICAMENTE) ---
     async function caricaFotoFirebase() {
       try {
         const q = query(collection(db, "galleria_foto"), orderBy("dataCaricamento", "desc"));
@@ -1126,94 +1117,11 @@
       });
     }
 
-    async function comprimiFotoSeNecessario(file, statusElement) {
-      const fileNameLower = file.name.toLowerCase();
-      const isHeic = fileNameLower.endsWith('.heic') || fileNameLower.endsWith('.heif');
-      
-      if (!file.type.startsWith('image/') && !isHeic && !fileNameLower.match(/\.(jpg|jpeg|png|webp)$/)) {
-        return file;
-      }
-
-      statusElement.textContent = `⚡ Ottimizzazione e conversione in corso...`;
-
-      return new Promise(async (resolve) => {
-        try {
-          let targetFile = file;
-
-          if (isHeic && typeof heicTo !== 'undefined') {
-            statusElement.textContent = `🔄 Conversione formato Apple (HEIC) in JPEG...`;
-            try {
-              const convertedBlob = await heicTo({
-                blob: file,
-                type: "image/jpeg",
-                quality: 0.85
-              });
-              const cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-              targetFile = new File([convertedBlob], cleanName + ".jpg", { type: 'image/jpeg' });
-            } catch (heicErr) {
-              console.error("Errore conversione heic-to:", heicErr);
-              resolve(null);
-              return;
-            }
-          }
-
-          const reader = new FileReader();
-          reader.readAsDataURL(targetFile);
-          
-          reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            
-            img.onload = () => {
-              try {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                const maxWidth = 1920; 
-
-                if (width > maxWidth) {
-                  height = Math.round((height * maxWidth) / width);
-                  width = maxWidth;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                canvas.toBlob((blob) => {
-                  if (!blob) {
-                    resolve(null);
-                    return;
-                  }
-                  const cleanName = targetFile.name.substring(0, targetFile.name.lastIndexOf('.')) || targetFile.name;
-                  const forcedJpegFile = new File([blob], cleanName + ".jpg", { type: 'image/jpeg' });
-                  
-                  statusElement.textContent = `✅ Convertito in JPEG con successo!`;
-                  resolve(forcedJpegFile);
-                }, 'image/jpeg', 0.85);
-
-              } catch (err) {
-                resolve(null);
-              }
-            };
-
-            img.onerror = () => resolve(null);
-          };
-
-          reader.onerror = () => resolve(null);
-
-        } catch (err) {
-          resolve(null);
-        }
-      });
-    }
-
     document.getElementById('upload-form-photo').addEventListener('submit', async (e) => {
       e.preventDefault();
       const formElement = document.getElementById('upload-form-photo');
-      let fileInput = document.getElementById('photo-file');
-      let file = fileInput.files[0];
+      const fileInput = document.getElementById('photo-file');
+      const file = fileInput.files[0];
       const status = document.getElementById('photo-status');
       const btn = document.getElementById('btn-submit-photo');
 
@@ -1222,19 +1130,9 @@
       btn.disabled = true;
       status.style.display = "block";
       status.style.color = "var(--primary-color)";
+      status.textContent = "Caricamento in corso (il cloud penserà alla conversione)...";
 
       try {
-        file = await comprimiFotoSeNecessario(file, status);
-
-        if (!file) {
-           status.style.color = "#ff4d4d";
-           status.textContent = "⚠️ Formato HEIC non leggibile. Apri il Convertitore Rapido qui sopra per trasformarla in JPG!";
-           btn.disabled = false;
-           return;
-        }
-
-        status.textContent = "Caricamento sicuro su Firebase...";
-
         const fileRef = ref(storage, `galleria_foto/${Date.now()}_${file.name}`);
         const uploadTask = uploadBytesResumable(fileRef, file);
 
@@ -1258,10 +1156,10 @@
                 dataCaricamento: serverTimestamp()
               });
               status.style.color = "#2ecc71";
-              status.textContent = "✅ Fatto!";
+              status.textContent = "✅ Fatto! Foto caricata e convertita.";
               formElement.reset();
               await caricaFotoFirebase();
-              window.mostraAlert("Successo", "Foto caricata! Sul sito apparirà perfettamente.", "🖼️");
+              window.mostraAlert("Successo", "Foto caricata! Il server la convertirà e ottimizzerà in pochi secondi.", "🖼️");
             } catch (dbErr) { 
               console.error(dbErr);
               status.style.color = "#ff4d4d"; 
